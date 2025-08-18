@@ -1,0 +1,219 @@
+{
+  "categories": [
+    {
+      "name": "Food & Dining",
+      "keywords": [
+        "restaurant", "food", "cafe", "coffee", "dinner", "lunch", "breakfast",
+        "pizza", "burger", "sushi", "bar", "pub", "grill", "diner", "kitchen",
+        "mcdonald", "subway", "starbucks", "kfc", "taco", "domino", "chipotle",
+        "grocery", "market", "whole foods", "trader joe", "safeway", "kroger",
+        "takeout", "delivery", "uber eats", "doordash", "grubhub", "postmates",
+        "bakery", "deli", "catering", "buffet", "fast food", "drive thru"
+      ],
+      "patterns": [
+        ".*restaurant.*", ".*food.*", ".*cafe.*", ".*pizza.*", ".*burger.*",
+        ".*grocery.*", ".*market.*", ".*dining.*", ".*kitchen.*", ".*grill.*"
+      ],
+      "merchants": [
+        "McDonald's", "Starbucks", "Subway", "KFC", "Taco Bell", "Domino's",
+        "Pizza Hut", "Chipotle", "Whole Foods", "Trader Joe's", "Safeway",
+        "Kroger", "Walmart Grocery", "Target Grocery", "Costco", "Sam's Club"
+      ]
+    },
+    {
+      "name": "Transportation",
+      "keywords": [
+        "gas", "fuel", "gasoline", "uber", "lyft", "taxi", "bus", "train",
+        "metro", "subway", "parking", "toll", "car", "auto", "repair",
+        "shell", "exxon", "bp", "chevron", "mobil", "citgo", "speedway",
+        "airline", "flight", "airport", "rental car", "car wash", "oil change"
+      ],
+      "patterns": [
+        ".*gas.*station.*", ".*fuel.*", ".*uber.*", ".*lyft.*", ".*taxi.*",
+        ".*parking.*", ".*toll.*", ".*auto.*", ".*car.*", ".*transport.*"
+      ],
+      "merchants": [
+        "Shell", "Exxon", "BP", "Chevron", "Mobil", "Uber", "Lyft",
+        "Delta Airlines", "United Airlines", "American Airlines", "Southwest",
+        "Enterprise", "Hertz", "Budget", "Avis", "Metro Transit"
+      ]
+    },
+    {
+      "name": "Shopping",
+      "keywords": [
+        "amazon", "target", "walmart", "costco", "shop", "store", "retail",
+        "clothes", "clothing", "shoes", "mall", "purchase", "buy",
+        "ebay", "etsy", "best buy", "home depot", "lowes", "macys",
+        "department store", "outlet", "fashion", "accessories", "jewelry"
+      ],
+      "patterns": [
+        ".*amazon.*", ".*target.*", ".*walmart.*", ".*shop.*", ".*store.*",
+        ".*retail.*", ".*mall.*", ".*clothing.*", ".*fashion.*"
+      ],
+      "merchants": [
+        "Amazon", "Target", "Walmart", "Costco", "Best Buy", "Home Depot",
+        "Lowe's", "Macy's", "Nordstrom", "eBay", "Etsy", "Apple Store",
+        "GameStop", "Barnes & Noble", "Dick's Sporting Goods"
+      ]
+    },
+    {
+      "name": "Entertainment",
+      "keywords": [
+        "movie", "cinema", "theater", "netflix", "spotify", "games", "gaming",
+        "concert", "show", "event", "ticket", "entertainment", "fun",
+        "disney", "hulu", "youtube", "steam", "playstation", "xbox",
+        "music", "streaming", "subscription", "club", "bar", "nightlife"
+      ],
+      "patterns": [
+        ".*movie.*", ".*cinema.*", ".*theater.*", ".*netflix.*", ".*spotify.*",
+        ".*games.*", ".*entertainment.*", ".*concert.*", ".*ticket.*"
+      ],
+      "merchants": [
+        "Netflix", "Spotify", "Disney+", "Hulu", "Amazon Prime Video",
+        "Steam", "PlayStation", "Xbox", "AMC Theaters", "Regal Cinemas",
+        "Ticketmaster", "StubHub", "YouTube Premium", "Apple Music"
+      ]
+    },
+    {
+      "name": "Bills & Utilities",
+      "keywords": [
+        "electric", "electricity", "water", "gas", "internet", "phone",
+        "cable", "utility", "bill", "payment", "insurance", "rent",
+        "verizon", "att", "comcast", "xfinity", "tmobile", "sprint",
+        "mortgage", "loan", "credit card", "bank", "subscription"
+      ],
+      "patterns": [
+        ".*electric.*", ".*utility.*", ".*bill.*", ".*insurance.*",
+        ".*rent.*", ".*mortgage.*", ".*loan.*", ".*credit.*card.*"
+      ],
+      "merchants": [
+        "Verizon", "AT&T", "T-Mobile", "Sprint", "Comcast", "Xfinity",
+        "Pacific Gas & Electric", "Con Edison", "State Farm", "Geico",
+        "Progressive", "Chase", "Bank of America", "Wells Fargo"
+      ]
+    },
+    {
+      "name": "Healthcare",
+      "keywords": [
+        "doctor", "hospital", "medical", "pharmacy", "health", "dental",
+        "clinic", "medicine", "prescription", "cvs", "walgreens", "rite aid",
+        "urgent care", "emergency", "dentist", "optometry", "therapy"
+      ],
+      "patterns": [
+        ".*doctor.*", ".*hospital.*", ".*medical.*", ".*pharmacy.*",
+        ".*health.*", ".*dental.*", ".*clinic.*", ".*medicine.*"
+      ],
+      "merchants": [
+        "CVS Pharmacy", "Walgreens", "Rite Aid", "Kaiser Permanente",
+        "Blue Cross", "Aetna", "Cigna", "UnitedHealth", "Humana"
+      ]
+    },
+    {
+      "name": "Travel",
+      "keywords": [
+        "hotel", "flight", "airline", "travel", "vacation", "trip",
+        "booking", "airbnb", "expedia", "delta", "united", "american airlines",
+        "southwest", "jetblue", "marriott", "hilton", "hyatt", "rental"
+      ],
+      "patterns": [
+        ".*hotel.*", ".*flight.*", ".*airline.*", ".*travel.*",
+        ".*vacation.*", ".*trip.*", ".*booking.*", ".*airbnb.*"
+      ],
+      "merchants": [
+        "Airbnb", "Booking.com", "Expedia", "Hotels.com", "Marriott",
+        "Hilton", "Hyatt", "Delta Airlines", "United Airlines", "Southwest",
+        "American Airlines", "JetBlue", "Enterprise Rent-A-Car"
+      ]
+    },
+    {
+      "name": "Education",
+      "keywords": [
+        "school", "university", "college", "education", "tuition", "book",
+        "course", "class", "training", "learning", "udemy", "coursera",
+        "khan academy", "textbook", "supplies", "student", "academic"
+      ],
+      "patterns": [
+        ".*school.*", ".*university.*", ".*college.*", ".*education.*",
+        ".*tuition.*", ".*course.*", ".*training.*", ".*textbook.*"
+      ],
+      "merchants": [
+        "Udemy", "Coursera", "Khan Academy", "Skillshare", "MasterClass",
+        "Pearson", "McGraw Hill", "Cengage", "Barnes & Noble College"
+      ]
+    },
+    {
+      "name": "Personal Care",
+      "keywords": [
+        "salon", "spa", "haircut", "beauty", "cosmetics", "personal",
+        "care", "grooming", "massage", "nails", "manicure", "pedicure",
+        "skincare", "makeup", "shampoo", "conditioner", "soap"
+      ],
+      "patterns": [
+        ".*salon.*", ".*spa.*", ".*beauty.*", ".*cosmetics.*",
+        ".*personal.*care.*", ".*grooming.*", ".*massage.*"
+      ],
+      "merchants": [
+        "Sephora", "Ulta Beauty", "Sally Beauty", "Great Clips",
+        "Supercuts", "Sport Clips", "Massage Envy", "Hand & Stone"
+      ]
+    },
+    {
+      "name": "Gifts & Donations",
+      "keywords": [
+        "gift", "present", "donation", "charity", "nonprofit", "church",
+        "religious", "fundraiser", "gofundme", "red cross", "salvation army",
+        "goodwill", "united way", "birthday", "anniversary", "wedding"
+      ],
+      "patterns": [
+        ".*gift.*", ".*donation.*", ".*charity.*", ".*nonprofit.*",
+        ".*church.*", ".*fundraiser.*", ".*present.*"
+      ],
+      "merchants": [
+        "GoFundMe", "American Red Cross", "Salvation Army", "Goodwill",
+        "United Way", "St. Jude", "ASPCA", "Doctors Without Borders"
+      ]
+    },
+    {
+      "name": "Business",
+      "keywords": [
+        "office", "business", "supplies", "meeting", "conference",
+        "professional", "work", "staples", "fedex", "ups", "postage",
+        "shipping", "coworking", "software", "saas", "hosting", "domain"
+      ],
+      "patterns": [
+        ".*office.*", ".*business.*", ".*supplies.*", ".*professional.*",
+        ".*work.*", ".*shipping.*", ".*software.*", ".*hosting.*"
+      ],
+      "merchants": [
+        "Staples", "Office Depot", "FedEx", "UPS", "USPS", "WeWork",
+        "Regus", "Microsoft", "Adobe", "Zoom", "Slack", "Dropbox"
+      ]
+    },
+    {
+      "name": "Other",
+      "keywords": [
+        "misc", "miscellaneous", "other", "unknown", "various", "general",
+        "cash", "atm", "withdrawal", "transfer", "fee", "charge"
+      ],
+      "patterns": [
+        ".*misc.*", ".*other.*", ".*unknown.*", ".*cash.*", ".*atm.*",
+        ".*fee.*", ".*charge.*", ".*transfer.*"
+      ],
+      "merchants": []
+    }
+  ],
+  "confidence_thresholds": {
+    "high": 0.8,
+    "medium": 0.6,
+    "low": 0.4
+  },
+  "default_category": "Other",
+  "model_settings": {
+    "min_description_length": 3,
+    "max_description_length": 500,
+    "use_merchant_data": true,
+    "case_sensitive": false,
+    "enable_fuzzy_matching": true,
+    "fuzzy_threshold": 0.8
+  }
+}

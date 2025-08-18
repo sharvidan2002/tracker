@@ -1,0 +1,231 @@
+description,merchant,category
+McDonald's Restaurant,McDonald's,Food & Dining
+Coffee at Starbucks,Starbucks,Food & Dining
+Dinner at Italian restaurant,Olive Garden,Food & Dining
+Grocery shopping,Whole Foods,Food & Dining
+Pizza delivery,Domino's Pizza,Food & Dining
+Lunch at work cafeteria,Company Cafeteria,Food & Dining
+Breakfast sandwich,Subway,Food & Dining
+Chinese takeout,Panda Express,Food & Dining
+Burger and fries,Five Guys,Food & Dining
+Sushi dinner,Sushi Palace,Food & Dining
+Gas station fill up,Shell,Transportation
+Uber ride downtown,Uber,Transportation
+Taxi to airport,Yellow Cab,Transportation
+Bus ticket,Metro Transit,Transportation
+Parking meter,City Parking,Transportation
+Car repair service,AutoZone,Transportation
+Oil change,Jiffy Lube,Transportation
+Train ticket,Amtrak,Transportation
+Lyft to meeting,Lyft,Transportation
+Rental car for weekend,Enterprise,Transportation
+Online shopping,Amazon,Shopping
+Clothes shopping,Target,Shopping
+Electronics purchase,Best Buy,Shopping
+Home supplies,Home Depot,Shopping
+New shoes,Nike Store,Shopping
+Books and magazines,Barnes & Noble,Shopping
+Sporting goods,Dick's Sporting Goods,Shopping
+Furniture shopping,IKEA,Shopping
+Jewelry purchase,Kay Jewelers,Shopping
+Tools and hardware,Lowe's,Shopping
+Movie tickets,AMC Theaters,Entertainment
+Netflix subscription,Netflix,Entertainment
+Concert tickets,Ticketmaster,Entertainment
+Video games,GameStop,Entertainment
+Spotify premium,Spotify,Entertainment
+Bowling night,Strike Zone,Entertainment
+Mini golf,Adventure Golf,Entertainment
+Theme park visit,Disneyland,Entertainment
+Comedy show,Laugh Factory,Entertainment
+Sports event tickets,StubHub,Entertainment
+Electric bill payment,PG&E,Bills & Utilities
+Internet service,Comcast,Bills & Utilities
+Phone bill,Verizon,Bills & Utilities
+Water utility,Water Department,Bills & Utilities
+Insurance payment,State Farm,Bills & Utilities
+Credit card payment,Chase Bank,Bills & Utilities
+Mortgage payment,Wells Fargo,Bills & Utilities
+Cable TV service,DirectTV,Bills & Utilities
+Trash collection,Waste Management,Bills & Utilities
+HOA fees,Property Management,Bills & Utilities
+Doctor visit copay,Kaiser Permanente,Healthcare
+Prescription medication,CVS Pharmacy,Healthcare
+Dental cleaning,Dental Associates,Healthcare
+Eye exam,LensCrafters,Healthcare
+Physical therapy,Sports Medicine,Healthcare
+Urgent care visit,Urgent Care Center,Healthcare
+Blood test,LabCorp,Healthcare
+Vitamins and supplements,Walgreens,Healthcare
+Medical equipment,Medical Supply Co,Healthcare
+Health insurance premium,Blue Cross,Healthcare
+Hotel accommodation,Marriott,Travel
+Flight to Chicago,United Airlines,Travel
+Rental car in Boston,Hertz,Travel
+Vacation resort,Hyatt Resort,Travel
+Travel insurance,Travel Guard,Travel
+Airport parking,Airport Authority,Travel
+Cruise vacation,Royal Caribbean,Travel
+Hostel stay,Hostelling International,Travel
+Tour guide service,City Tours,Travel
+Travel booking fee,Expedia,Travel
+College tuition,State University,Education
+Textbooks,Pearson,Education
+Online course,Udemy,Education
+Professional certification,Microsoft,Education
+Workshop attendance,Learning Center,Education
+School supplies,Staples,Education
+Laptop for school,Apple Store,Education
+Educational software,Adobe,Education
+Library fines,Public Library,Education
+Continuing education,Professional Development,Education
+Haircut and styling,Great Clips,Personal Care
+Spa treatment,Day Spa,Personal Care
+Manicure and pedicure,Nail Salon,Personal Care
+Skincare products,Sephora,Personal Care
+Makeup purchase,Ulta Beauty,Personal Care
+Massage therapy,Massage Envy,Personal Care
+Gym membership,24 Hour Fitness,Personal Care
+Personal trainer,Fitness First,Personal Care
+Yoga classes,Yoga Studio,Personal Care
+Cosmetic procedure,Dermatology Clinic,Personal Care
+Birthday gift,Gift Shop,Gifts & Donations
+Wedding present,Registry Store,Gifts & Donations
+Charity donation,Red Cross,Gifts & Donations
+Church offering,Local Church,Gifts & Donations
+Fundraiser contribution,School Foundation,Gifts & Donations
+Holiday gifts,Department Store,Gifts & Donations
+Baby shower gift,Baby Store,Gifts & Donations
+Anniversary present,Jewelry Store,Gifts & Donations
+Graduation gift,Electronics Store,Gifts & Donations
+Thank you gift,Flower Shop,Gifts & Donations
+Office supplies,Staples,Business
+Business lunch,Restaurant,Business
+Conference registration,Event Management,Business
+Coworking space,WeWork,Business
+Professional software,Microsoft,Business
+Business cards,Print Shop,Business
+Marketing materials,FedEx Office,Business
+Business travel,Hotel,Business
+Client meeting expenses,Coffee Shop,Business
+Professional development,Training Institute,Business
+ATM withdrawal,Bank ATM,Other
+Bank fees,Chase Bank,Other
+Money transfer,Western Union,Other
+Cashback reward,Credit Card,Other
+Investment contribution,Fidelity,Other
+Savings deposit,Savings Account,Other
+Tax preparation,H&R Block,Other
+Legal services,Law Firm,Other
+Accounting services,CPA Office,Other
+Miscellaneous expense,Various,Other
+Fast food lunch,McDonald's,Food & Dining
+Coffee and pastry,Starbucks,Food & Dining
+Weekly groceries,Safeway,Food & Dining
+Restaurant dinner,Cheesecake Factory,Food & Dining
+Food delivery,DoorDash,Food & Dining
+Ice cream treat,Baskin Robbins,Food & Dining
+Deli sandwich,Local Deli,Food & Dining
+Mexican food,Chipotle,Food & Dining
+Bakery items,Local Bakery,Food & Dining
+Protein shake,Smoothie King,Food & Dining
+Fill up gas tank,Chevron,Transportation
+Ride sharing,Uber,Transportation
+Public transportation,BART,Transportation
+Vehicle maintenance,Midas,Transportation
+Parking garage,Downtown Parking,Transportation
+Highway toll,E-ZPass,Transportation
+Car wash service,Auto Spa,Transportation
+Emergency roadside,AAA,Transportation
+Motorcycle insurance,Progressive,Transportation
+Vehicle registration,DMV,Transportation
+Department store,Macy's,Shopping
+Warehouse shopping,Costco,Shopping
+Online marketplace,eBay,Shopping
+Specialty store,REI,Shopping
+Outlet shopping,Premium Outlets,Shopping
+Thrift store,Goodwill,Shopping
+Antique shop,Antique Mall,Shopping
+Pet supplies,PetSmart,Shopping
+Garden center,Home Depot,Shopping
+Craft supplies,Michaels,Shopping
+Streaming service,Hulu,Entertainment
+Gaming subscription,PlayStation Plus,Entertainment
+Museum admission,Natural History Museum,Entertainment
+Art gallery,Modern Art Gallery,Entertainment
+Karaoke night,Karaoke Bar,Entertainment
+Dance lessons,Dance Studio,Entertainment
+Escape room,Escape Adventures,Entertainment
+Arcade games,Dave & Busters,Entertainment
+Live music,Music Venue,Entertainment
+Festival tickets,Music Festival,Entertainment
+Electricity bill,Edison,Bills & Utilities
+Natural gas,Gas Company,Bills & Utilities
+Garbage service,Republic Services,Bills & Utilities
+Security system,ADT,Bills & Utilities
+Landscaping service,Lawn Care,Bills & Utilities
+Pool maintenance,Pool Service,Bills & Utilities
+Pest control,Terminix,Bills & Utilities
+Home warranty,Home Warranty Co,Bills & Utilities
+Satellite service,Dish Network,Bills & Utilities
+Solar panel payment,Solar Company,Bills & Utilities
+Specialist consultation,Medical Center,Healthcare
+Emergency room,Hospital,Healthcare
+Mental health therapy,Therapy Center,Healthcare
+Chiropractic treatment,Chiropractic Clinic,Healthcare
+Alternative medicine,Acupuncture Clinic,Healthcare
+Medical imaging,Radiology Center,Healthcare
+Surgery copay,Surgery Center,Healthcare
+Rehabilitation,Physical Therapy,Healthcare
+Home health care,Nursing Service,Healthcare
+Medical supplies,Medical Equipment,Healthcare
+Business hotel,Business Hotel,Travel
+International flight,Lufthansa,Travel
+Train travel,Eurostar,Travel
+Travel visa,Embassy,Travel
+Foreign currency,Currency Exchange,Travel
+Travel gear,Travel Store,Travel
+Guidebook,Bookstore,Travel
+Travel vaccinations,Travel Clinic,Travel
+Passport renewal,Post Office,Travel
+Travel adapter,Electronics Store,Travel
+Private tutoring,Tutor,Education
+Language lessons,Language School,Education
+Music lessons,Music School,Education
+Art classes,Art Studio,Education
+Dance instruction,Dance Academy,Education
+Driving lessons,Driving School,Education
+Test preparation,Test Prep Center,Education
+Educational toys,Educational Store,Education
+Science kit,Science Museum,Education
+Reference books,Academic Press,Education
+Personal grooming,Barber Shop,Personal Care
+Fitness equipment,Fitness Store,Personal Care
+Supplements,Nutrition Store,Personal Care
+Meditation app,Headspace,Personal Care
+Self-care products,Bath & Body Works,Personal Care
+Perfume purchase,Perfume Shop,Personal Care
+Dental care products,Oral Care,Personal Care
+Eye care,Contact Lens Store,Personal Care
+Foot care,Podiatrist,Personal Care
+Skin treatment,Esthetician,Personal Care
+Corporate gift,Corporate Store,Gifts & Donations
+Sympathy flowers,Florist,Gifts & Donations
+Volunteer appreciation,Community Center,Gifts & Donations
+Auction bid,Charity Auction,Gifts & Donations
+Sponsorship,Local Sports Team,Gifts & Donations
+Memorial donation,Memorial Fund,Gifts & Donations
+Scholarship fund,Education Foundation,Gifts & Donations
+Animal shelter,SPCA,Gifts & Donations
+Environmental charity,Sierra Club,Gifts & Donations
+Disaster relief,Disaster Relief Fund,Gifts & Donations
+Business equipment,Office Equipment,Business
+Trade show,Exhibition Center,Business
+Networking event,Business Association,Business
+Professional membership,Professional Society,Business
+Consulting services,Consultant,Business
+Legal consultation,Attorney,Business
+Patent filing,Patent Office,Business
+Business insurance,Business Insurance,Business
+Equipment rental,Rental Company,Business
+Vendor payment,Supplier,Business
