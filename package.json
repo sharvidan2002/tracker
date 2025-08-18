@@ -1,0 +1,30 @@
+{
+  "name": "smart-expense-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart Expense Categorizer with AI Financial Advisor",
+  "author": "Your Name",
+  "license": "MIT",
+  "workspaces": [
+    "web-client",
+    "mobile-client",
+    "api-server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\" \"npm run dev:ml\"",
+    "dev:web": "cd web-client && npm run dev",
+    "dev:api": "cd api-server && npm run dev",
+    "dev:ml": "cd ml-service && python app.py",
+    "dev:mobile": "cd mobile-client && npm start",
+    "build": "npm run build:shared && npm run build:web && npm run build:api",
+    "build:shared": "cd shared && npm run build",
+    "build:web": "cd web-client && npm run build",
+    "build:api": "cd api-server && npm run build",
+    "install:all": "npm install && cd web-client && npm install && cd ../mobile-client && npm install && cd ../api-server && npm install && cd ../shared && npm install",
+    "clean": "rm -rf node_modules web-client/node_modules mobile-client/node_modules api-server/node_modules shared/node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

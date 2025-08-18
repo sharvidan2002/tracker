@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: expense_tracker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/postgresql:/docker-entrypoint-initdb.d
+    networks:
+      - expense_tracker_network
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: expense_tracker
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/mongodb:/docker-entrypoint-initdb.d
+    networks:
+      - expense_tracker_network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - expense_tracker_network
+
+  # API Server
+  api-server:
+    build:
+      context: ./api-server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: expense_tracker
+      DB_USER: postgres
+      DB_PASSWORD: password
+      MONGODB_URL: mongodb://admin:password@mongodb:27017/expense_tracker?authSource=admin
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-jwt-secret-key
+      ML_SERVICE_URL: http://ml-service:5000
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - ml-service
+    volumes:
+      - ./api-server:/app
+      - /app/node_modules
+    networks:
+      - expense_tracker_network
+
+  # ML Service
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: development
+      GEMINI_API_KEY: your-gemini-api-key
+    volumes:
+      - ./ml-service:/app
+    networks:
+      - expense_tracker_network
+
+  # Web Client (for production)
+  web-client:
+    build:
+      context: ./web-client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    depends_on:
+      - api-server
+    networks:
+      - expense_tracker_network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+
+networks:
+  expense_tracker_network:
+    driver: bridge
