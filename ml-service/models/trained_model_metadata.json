@@ -1,0 +1,16 @@
+{
+  "model_type": "MultinomialNB",
+  "accuracy": 0.7142857142857143,
+  "categories": [
+    "Bills & Utilities",
+    "Entertainment",
+    "Food & Dining",
+    "Healthcare",
+    "Shopping",
+    "Transportation",
+    "Travel"
+  ],
+  "training_date": "2025-08-19T10:32:55.598547",
+  "feature_count": 410,
+  "version": "1.0"
+}

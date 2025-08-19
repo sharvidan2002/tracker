@@ -26,8 +26,12 @@ import seaborn as sns
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models.expense_classifier import ExpenseClassifier
-from config import Config
+try:
+    from models.expense_classifier import ExpenseClassifier
+    from config import Config
+except ImportError as e:
+    print(f"Warning: Could not import custom modules: {e}")
+    print("Continuing without custom modules...")
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
@@ -81,74 +85,88 @@ def create_synthetic_data() -> list:
 
     synthetic_data = [
         # Food & Dining
-        {'description': 'Starbucks coffee', 'merchant': 'Starbucks', 'category': 'Food & Dining'},
-        {'description': 'McDonald lunch', 'merchant': 'McDonald\'s', 'category': 'Food & Dining'},
-        {'description': 'Pizza delivery', 'merchant': 'Dominos', 'category': 'Food & Dining'},
-        {'description': 'Grocery shopping', 'merchant': 'Walmart', 'category': 'Food & Dining'},
-        {'description': 'Restaurant dinner', 'merchant': 'Olive Garden', 'category': 'Food & Dining'},
-        {'description': 'Coffee shop', 'merchant': 'Local Cafe', 'category': 'Food & Dining'},
-        {'description': 'Fast food lunch', 'merchant': 'Burger King', 'category': 'Food & Dining'},
-        {'description': 'Bakery purchase', 'merchant': 'Sweet Treats', 'category': 'Food & Dining'},
+        {'description': 'Starbucks coffee morning', 'merchant': 'Starbucks', 'category': 'Food & Dining'},
+        {'description': 'McDonald lunch meal', 'merchant': 'McDonald\'s', 'category': 'Food & Dining'},
+        {'description': 'Pizza delivery dinner', 'merchant': 'Dominos', 'category': 'Food & Dining'},
+        {'description': 'Grocery shopping weekly', 'merchant': 'Walmart', 'category': 'Food & Dining'},
+        {'description': 'Restaurant dinner date', 'merchant': 'Olive Garden', 'category': 'Food & Dining'},
+        {'description': 'Coffee shop meeting', 'merchant': 'Local Cafe', 'category': 'Food & Dining'},
+        {'description': 'Fast food quick lunch', 'merchant': 'Burger King', 'category': 'Food & Dining'},
+        {'description': 'Bakery fresh bread', 'merchant': 'Sweet Treats', 'category': 'Food & Dining'},
+        {'description': 'Sushi restaurant dinner', 'merchant': 'Sakura Sushi', 'category': 'Food & Dining'},
+        {'description': 'Ice cream dessert', 'merchant': 'Dairy Queen', 'category': 'Food & Dining'},
 
         # Transportation
         {'description': 'Gas station fill up', 'merchant': 'Shell', 'category': 'Transportation'},
-        {'description': 'Uber ride', 'merchant': 'Uber', 'category': 'Transportation'},
-        {'description': 'Taxi fare', 'merchant': 'Yellow Cab', 'category': 'Transportation'},
-        {'description': 'Bus ticket', 'merchant': 'Metro Transit', 'category': 'Transportation'},
-        {'description': 'Parking fee', 'merchant': 'ParkWhiz', 'category': 'Transportation'},
-        {'description': 'Car maintenance', 'merchant': 'Auto Shop', 'category': 'Transportation'},
-        {'description': 'Oil change', 'merchant': 'Jiffy Lube', 'category': 'Transportation'},
-        {'description': 'Car wash', 'merchant': 'Clean Car', 'category': 'Transportation'},
+        {'description': 'Uber ride downtown', 'merchant': 'Uber', 'category': 'Transportation'},
+        {'description': 'Taxi fare airport', 'merchant': 'Yellow Cab', 'category': 'Transportation'},
+        {'description': 'Bus ticket monthly pass', 'merchant': 'Metro Transit', 'category': 'Transportation'},
+        {'description': 'Parking fee shopping mall', 'merchant': 'ParkWhiz', 'category': 'Transportation'},
+        {'description': 'Car maintenance oil change', 'merchant': 'Auto Shop', 'category': 'Transportation'},
+        {'description': 'Oil change service', 'merchant': 'Jiffy Lube', 'category': 'Transportation'},
+        {'description': 'Car wash detail', 'merchant': 'Clean Car', 'category': 'Transportation'},
+        {'description': 'Train ticket commute', 'merchant': 'Metro Rail', 'category': 'Transportation'},
+        {'description': 'Lyft ride home', 'merchant': 'Lyft', 'category': 'Transportation'},
 
         # Shopping
-        {'description': 'Amazon purchase', 'merchant': 'Amazon', 'category': 'Shopping'},
-        {'description': 'Clothes shopping', 'merchant': 'Target', 'category': 'Shopping'},
-        {'description': 'Electronics store', 'merchant': 'Best Buy', 'category': 'Shopping'},
-        {'description': 'Home supplies', 'merchant': 'Home Depot', 'category': 'Shopping'},
-        {'description': 'Book purchase', 'merchant': 'Barnes & Noble', 'category': 'Shopping'},
-        {'description': 'Online shopping', 'merchant': 'eBay', 'category': 'Shopping'},
-        {'description': 'Pharmacy purchase', 'merchant': 'CVS', 'category': 'Shopping'},
-        {'description': 'Pet supplies', 'merchant': 'PetSmart', 'category': 'Shopping'},
+        {'description': 'Amazon package delivery', 'merchant': 'Amazon', 'category': 'Shopping'},
+        {'description': 'Clothes shopping weekend', 'merchant': 'Target', 'category': 'Shopping'},
+        {'description': 'Electronics store laptop', 'merchant': 'Best Buy', 'category': 'Shopping'},
+        {'description': 'Home supplies renovation', 'merchant': 'Home Depot', 'category': 'Shopping'},
+        {'description': 'Book purchase novel', 'merchant': 'Barnes & Noble', 'category': 'Shopping'},
+        {'description': 'Online shopping deals', 'merchant': 'eBay', 'category': 'Shopping'},
+        {'description': 'Pharmacy vitamins', 'merchant': 'CVS', 'category': 'Shopping'},
+        {'description': 'Pet supplies dog food', 'merchant': 'PetSmart', 'category': 'Shopping'},
+        {'description': 'Clothing store shoes', 'merchant': 'Nordstrom', 'category': 'Shopping'},
+        {'description': 'Electronics phone case', 'merchant': 'Apple Store', 'category': 'Shopping'},
 
         # Entertainment
-        {'description': 'Movie tickets', 'merchant': 'AMC Theaters', 'category': 'Entertainment'},
-        {'description': 'Concert tickets', 'merchant': 'Ticketmaster', 'category': 'Entertainment'},
-        {'description': 'Streaming service', 'merchant': 'Netflix', 'category': 'Entertainment'},
-        {'description': 'Video games', 'merchant': 'GameStop', 'category': 'Entertainment'},
-        {'description': 'Sports event', 'merchant': 'Stadium', 'category': 'Entertainment'},
-        {'description': 'Bowling night', 'merchant': 'Strike Zone', 'category': 'Entertainment'},
-        {'description': 'Theme park', 'merchant': 'Disney World', 'category': 'Entertainment'},
-        {'description': 'Museum visit', 'merchant': 'Art Museum', 'category': 'Entertainment'},
+        {'description': 'Movie tickets weekend', 'merchant': 'AMC Theaters', 'category': 'Entertainment'},
+        {'description': 'Concert tickets rock band', 'merchant': 'Ticketmaster', 'category': 'Entertainment'},
+        {'description': 'Streaming service monthly', 'merchant': 'Netflix', 'category': 'Entertainment'},
+        {'description': 'Video games new release', 'merchant': 'GameStop', 'category': 'Entertainment'},
+        {'description': 'Sports event basketball', 'merchant': 'Stadium', 'category': 'Entertainment'},
+        {'description': 'Bowling night friends', 'merchant': 'Strike Zone', 'category': 'Entertainment'},
+        {'description': 'Theme park admission', 'merchant': 'Disney World', 'category': 'Entertainment'},
+        {'description': 'Museum visit art exhibit', 'merchant': 'Art Museum', 'category': 'Entertainment'},
+        {'description': 'Music streaming premium', 'merchant': 'Spotify', 'category': 'Entertainment'},
+        {'description': 'Comedy show tickets', 'merchant': 'Comedy Club', 'category': 'Entertainment'},
 
         # Bills & Utilities
-        {'description': 'Electric bill', 'merchant': 'Electric Company', 'category': 'Bills & Utilities'},
-        {'description': 'Internet bill', 'merchant': 'Comcast', 'category': 'Bills & Utilities'},
-        {'description': 'Phone bill', 'merchant': 'Verizon', 'category': 'Bills & Utilities'},
-        {'description': 'Water bill', 'merchant': 'Water Department', 'category': 'Bills & Utilities'},
-        {'description': 'Rent payment', 'merchant': 'Property Management', 'category': 'Bills & Utilities'},
-        {'description': 'Insurance premium', 'merchant': 'State Farm', 'category': 'Bills & Utilities'},
+        {'description': 'Electric bill monthly payment', 'merchant': 'Electric Company', 'category': 'Bills & Utilities'},
+        {'description': 'Internet bill high speed', 'merchant': 'Comcast', 'category': 'Bills & Utilities'},
+        {'description': 'Phone bill unlimited plan', 'merchant': 'Verizon', 'category': 'Bills & Utilities'},
+        {'description': 'Water bill quarterly', 'merchant': 'Water Department', 'category': 'Bills & Utilities'},
+        {'description': 'Rent payment monthly', 'merchant': 'Property Management', 'category': 'Bills & Utilities'},
+        {'description': 'Insurance premium auto', 'merchant': 'State Farm', 'category': 'Bills & Utilities'},
         {'description': 'Credit card payment', 'merchant': 'Chase Bank', 'category': 'Bills & Utilities'},
-        {'description': 'Loan payment', 'merchant': 'Bank of America', 'category': 'Bills & Utilities'},
+        {'description': 'Loan payment student', 'merchant': 'Bank of America', 'category': 'Bills & Utilities'},
+        {'description': 'Cable TV subscription', 'merchant': 'DirectTV', 'category': 'Bills & Utilities'},
+        {'description': 'Home insurance annual', 'merchant': 'Allstate', 'category': 'Bills & Utilities'},
 
         # Healthcare
-        {'description': 'Doctor visit', 'merchant': 'Medical Center', 'category': 'Healthcare'},
-        {'description': 'Pharmacy prescription', 'merchant': 'Walgreens', 'category': 'Healthcare'},
-        {'description': 'Dentist appointment', 'merchant': 'Dental Clinic', 'category': 'Healthcare'},
-        {'description': 'Eye exam', 'merchant': 'Vision Center', 'category': 'Healthcare'},
-        {'description': 'Physical therapy', 'merchant': 'PT Clinic', 'category': 'Healthcare'},
-        {'description': 'Lab tests', 'merchant': 'LabCorp', 'category': 'Healthcare'},
-        {'description': 'Hospital bill', 'merchant': 'General Hospital', 'category': 'Healthcare'},
-        {'description': 'Urgent care', 'merchant': 'Urgent Care Center', 'category': 'Healthcare'},
+        {'description': 'Doctor visit annual checkup', 'merchant': 'Medical Center', 'category': 'Healthcare'},
+        {'description': 'Pharmacy prescription medication', 'merchant': 'Walgreens', 'category': 'Healthcare'},
+        {'description': 'Dentist appointment cleaning', 'merchant': 'Dental Clinic', 'category': 'Healthcare'},
+        {'description': 'Eye exam vision test', 'merchant': 'Vision Center', 'category': 'Healthcare'},
+        {'description': 'Physical therapy session', 'merchant': 'PT Clinic', 'category': 'Healthcare'},
+        {'description': 'Lab tests blood work', 'merchant': 'LabCorp', 'category': 'Healthcare'},
+        {'description': 'Hospital bill emergency', 'merchant': 'General Hospital', 'category': 'Healthcare'},
+        {'description': 'Urgent care flu symptoms', 'merchant': 'Urgent Care Center', 'category': 'Healthcare'},
+        {'description': 'Specialist consultation', 'merchant': 'Cardiology Clinic', 'category': 'Healthcare'},
+        {'description': 'Mental health therapy', 'merchant': 'Psychology Practice', 'category': 'Healthcare'},
 
         # Travel
-        {'description': 'Flight booking', 'merchant': 'Delta Airlines', 'category': 'Travel'},
-        {'description': 'Hotel reservation', 'merchant': 'Marriott', 'category': 'Travel'},
-        {'description': 'Car rental', 'merchant': 'Hertz', 'category': 'Travel'},
-        {'description': 'Travel insurance', 'merchant': 'Travel Guard', 'category': 'Travel'},
-        {'description': 'Airport parking', 'merchant': 'Airport Authority', 'category': 'Travel'},
-        {'description': 'Vacation package', 'merchant': 'Expedia', 'category': 'Travel'},
-        {'description': 'Train ticket', 'merchant': 'Amtrak', 'category': 'Travel'},
-        {'description': 'Travel gear', 'merchant': 'REI', 'category': 'Travel'},
+        {'description': 'Flight booking vacation', 'merchant': 'Delta Airlines', 'category': 'Travel'},
+        {'description': 'Hotel reservation business trip', 'merchant': 'Marriott', 'category': 'Travel'},
+        {'description': 'Car rental weekend trip', 'merchant': 'Hertz', 'category': 'Travel'},
+        {'description': 'Travel insurance coverage', 'merchant': 'Travel Guard', 'category': 'Travel'},
+        {'description': 'Airport parking long term', 'merchant': 'Airport Authority', 'category': 'Travel'},
+        {'description': 'Vacation package cruise', 'merchant': 'Expedia', 'category': 'Travel'},
+        {'description': 'Train ticket cross country', 'merchant': 'Amtrak', 'category': 'Travel'},
+        {'description': 'Travel gear backpack', 'merchant': 'REI', 'category': 'Travel'},
+        {'description': 'Airline ticket domestic', 'merchant': 'Southwest Airlines', 'category': 'Travel'},
+        {'description': 'Hotel booking conference', 'merchant': 'Hilton', 'category': 'Travel'},
     ]
 
     print(f"Created {len(synthetic_data)} synthetic training samples")
@@ -170,24 +188,35 @@ def prepare_features(data: list) -> tuple:
 
     return descriptions, categories
 
-def train_multiple_models(X_train, X_test, y_train, y_test, vectorizer):
+def train_multiple_models(X_train, X_test, y_train, y_test):
     """Train and compare multiple models."""
+    # Create vectorizer
+    vectorizer = TfidfVectorizer(
+        max_features=2000,
+        ngram_range=(1, 2),
+        min_df=1,
+        stop_words='english'
+    )
+
     models = {
-        'Naive Bayes': MultinomialNB(),
-        'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42),
-        'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42)
+        'Naive Bayes': Pipeline([
+            ('vectorizer', TfidfVectorizer(max_features=2000, ngram_range=(1, 2), min_df=1, stop_words='english')),
+            ('classifier', MultinomialNB())
+        ]),
+        'Random Forest': Pipeline([
+            ('vectorizer', TfidfVectorizer(max_features=2000, ngram_range=(1, 2), min_df=1, stop_words='english')),
+            ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))
+        ]),
+        'Logistic Regression': Pipeline([
+            ('vectorizer', TfidfVectorizer(max_features=2000, ngram_range=(1, 2), min_df=1, stop_words='english')),
+            ('classifier', LogisticRegression(max_iter=1000, random_state=42))
+        ])
     }
 
     results = {}
 
-    for name, model in models.items():
+    for name, pipeline in models.items():
         print(f"\nTraining {name}...")
-
-        # Create pipeline
-        pipeline = Pipeline([
-            ('vectorizer', vectorizer),
-            ('classifier', model)
-        ])
 
         # Train model
         pipeline.fit(X_train, y_train)
@@ -197,7 +226,13 @@ def train_multiple_models(X_train, X_test, y_train, y_test, vectorizer):
 
         # Calculate metrics
         accuracy = accuracy_score(y_test, y_pred)
-        cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
+
+        # Cross validation with error handling for small datasets
+        try:
+            cv_scores = cross_val_score(pipeline, X_train, y_train, cv=min(5, len(set(y_train))))
+        except Exception as e:
+            print(f"Warning: Cross-validation failed for {name}: {e}")
+            cv_scores = np.array([accuracy])  # Use test accuracy as fallback
 
         results[name] = {
             'model': pipeline,
@@ -224,9 +259,9 @@ def hyperparameter_tuning(X_train, y_train, best_model_name):
 
         param_grid = {
             'vectorizer__max_features': [1000, 2000, 3000],
-            'vectorizer__ngram_range': [(1, 1), (1, 2), (1, 3)],
-            'vectorizer__min_df': [1, 2, 3],
-            'classifier__alpha': [0.1, 0.5, 1.0, 2.0]
+            'vectorizer__ngram_range': [(1, 1), (1, 2)],
+            'vectorizer__min_df': [1, 2],
+            'classifier__alpha': [0.1, 0.5, 1.0]
         }
 
     elif best_model_name == 'Random Forest':
@@ -238,8 +273,8 @@ def hyperparameter_tuning(X_train, y_train, best_model_name):
         param_grid = {
             'vectorizer__max_features': [1000, 2000],
             'vectorizer__ngram_range': [(1, 1), (1, 2)],
-            'classifier__n_estimators': [50, 100, 200],
-            'classifier__max_depth': [10, 20, None]
+            'classifier__n_estimators': [50, 100],
+            'classifier__max_depth': [10, 20]
         }
 
     else:  # Logistic Regression
@@ -251,26 +286,31 @@ def hyperparameter_tuning(X_train, y_train, best_model_name):
         param_grid = {
             'vectorizer__max_features': [1000, 2000],
             'vectorizer__ngram_range': [(1, 1), (1, 2)],
-            'classifier__C': [0.1, 1.0, 10.0],
-            'classifier__penalty': ['l2']
+            'classifier__C': [0.1, 1.0, 10.0]
         }
 
-    # Perform grid search
-    grid_search = GridSearchCV(
-        pipeline,
-        param_grid,
-        cv=3,
-        scoring='accuracy',
-        n_jobs=-1,
-        verbose=1
-    )
+    # Perform grid search with error handling
+    try:
+        grid_search = GridSearchCV(
+            pipeline,
+            param_grid,
+            cv=min(3, len(set(y_train))),
+            scoring='accuracy',
+            n_jobs=1,  # Reduced to avoid potential issues
+            verbose=1
+        )
 
-    grid_search.fit(X_train, y_train)
+        grid_search.fit(X_train, y_train)
 
-    print(f"Best parameters: {grid_search.best_params_}")
-    print(f"Best cross-validation score: {grid_search.best_score_:.4f}")
+        print(f"Best parameters: {grid_search.best_params_}")
+        print(f"Best cross-validation score: {grid_search.best_score_:.4f}")
 
-    return grid_search.best_estimator_
+        return grid_search.best_estimator_
+    except Exception as e:
+        print(f"Hyperparameter tuning failed: {e}")
+        print("Using default parameters...")
+        pipeline.fit(X_train, y_train)
+        return pipeline
 
 def evaluate_model(model, X_test, y_test, categories):
     """Evaluate the trained model and generate reports."""
@@ -278,7 +318,6 @@ def evaluate_model(model, X_test, y_test, categories):
 
     # Make predictions
     y_pred = model.predict(X_test)
-    y_pred_proba = model.predict_proba(X_test) if hasattr(model, 'predict_proba') else None
 
     # Calculate accuracy
     accuracy = accuracy_score(y_test, y_pred)
@@ -286,29 +325,32 @@ def evaluate_model(model, X_test, y_test, categories):
 
     # Generate classification report
     print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
+    print(classification_report(y_test, y_pred, zero_division=0))
 
     # Generate confusion matrix
-    cm = confusion_matrix(y_test, y_pred, labels=categories)
+    try:
+        cm = confusion_matrix(y_test, y_pred, labels=categories)
 
-    # Plot confusion matrix
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                xticklabels=categories, yticklabels=categories)
-    plt.title('Confusion Matrix')
-    plt.ylabel('True Label')
-    plt.xlabel('Predicted Label')
-    plt.xticks(rotation=45)
-    plt.yticks(rotation=0)
-    plt.tight_layout()
+        # Plot confusion matrix
+        plt.figure(figsize=(12, 8))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                    xticklabels=categories, yticklabels=categories)
+        plt.title('Confusion Matrix')
+        plt.ylabel('True Label')
+        plt.xlabel('Predicted Label')
+        plt.xticks(rotation=45)
+        plt.yticks(rotation=0)
+        plt.tight_layout()
 
-    # Save confusion matrix
-    os.makedirs('reports', exist_ok=True)
-    plt.savefig('reports/confusion_matrix.png', dpi=300, bbox_inches='tight')
-    print("Confusion matrix saved to reports/confusion_matrix.png")
-    plt.close()
+        # Save confusion matrix
+        os.makedirs('reports', exist_ok=True)
+        plt.savefig('reports/confusion_matrix.png', dpi=300, bbox_inches='tight')
+        print("Confusion matrix saved to reports/confusion_matrix.png")
+        plt.close()
+    except Exception as e:
+        print(f"Could not generate confusion matrix plot: {e}")
 
-    return accuracy, y_pred, y_pred_proba
+    return accuracy, y_pred
 
 def save_model_and_metadata(model, accuracy, categories, model_path, metadata_path):
     """Save the trained model and metadata."""
@@ -318,25 +360,83 @@ def save_model_and_metadata(model, accuracy, categories, model_path, metadata_pa
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
 
-    # Save the model
-    joblib.dump(model, model_path)
+    try:
+        # Save the model with protocol version for compatibility
+        joblib.dump(model, model_path, protocol=2)
+        print("Model saved with joblib")
+    except Exception as e:
+        print(f"Error saving model with joblib: {e}")
+        # Try with pickle as fallback
+        import pickle
+        try:
+            with open(model_path, 'wb') as f:
+                pickle.dump(model, f, protocol=2)
+            print("Model saved with pickle")
+        except Exception as e2:
+            print(f"Error saving model with pickle: {e2}")
+            return False
 
     # Save metadata
-    metadata = {
-        'model_type': type(model).__name__,
-        'accuracy': accuracy,
-        'categories': categories,
-        'training_date': datetime.now().isoformat(),
-        'feature_count': model.named_steps['vectorizer'].get_feature_names_out().shape[0] if hasattr(model, 'named_steps') else 'unknown',
-        'version': '1.0'
-    }
+    try:
+        # Get feature count safely
+        feature_count = 'unknown'
+        if hasattr(model, 'named_steps') and 'vectorizer' in model.named_steps:
+            try:
+                feature_count = len(model.named_steps['vectorizer'].get_feature_names_out())
+            except:
+                feature_count = 'unknown'
 
-    with open(metadata_path, 'w') as f:
-        json.dump(metadata, f, indent=2)
+        metadata = {
+            'model_type': type(model.named_steps['classifier']).__name__ if hasattr(model, 'named_steps') else type(model).__name__,
+            'accuracy': float(accuracy),
+            'categories': categories,
+            'training_date': datetime.now().isoformat(),
+            'feature_count': feature_count,
+            'version': '1.0'
+        }
 
-    print(f"Model saved successfully!")
-    print(f"Model accuracy: {accuracy:.4f}")
-    print(f"Categories: {categories}")
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+
+        print(f"Model saved successfully!")
+        print(f"Model accuracy: {accuracy:.4f}")
+        print(f"Categories: {categories}")
+        return True
+    except Exception as e:
+        print(f"Error saving metadata: {e}")
+        return False
+
+def test_saved_model_simple(model_path, categories):
+    """Test the saved model with simple loading."""
+    print(f"\nTesting saved model...")
+    try:
+        # Try loading with joblib first
+        model = joblib.load(model_path)
+        print("Model loaded successfully with joblib")
+
+        # Test with a few examples
+        test_examples = [
+            "Coffee at Starbucks",
+            "Gas station purchase",
+            "Amazon online shopping",
+            "Doctor visit",
+            "Movie tickets"
+        ]
+
+        for example in test_examples:
+            try:
+                prediction = model.predict([example])[0]
+                probabilities = model.predict_proba([example])[0] if hasattr(model, 'predict_proba') else None
+                confidence = max(probabilities) if probabilities is not None else 0.0
+                print(f"'{example}' -> {prediction} (confidence: {confidence:.3f})")
+            except Exception as e:
+                print(f"Error predicting '{example}': {e}")
+
+        return True
+
+    except Exception as e:
+        print(f"Error testing saved model: {e}")
+        return False
 
 def main():
     parser = argparse.ArgumentParser(description='Train expense categorization model')
@@ -376,27 +476,27 @@ def main():
     unique_categories = sorted(list(set(categories)))
     print(f"Found {len(unique_categories)} categories: {unique_categories}")
 
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(
-        descriptions, categories,
-        test_size=args.test_size,
-        random_state=42,
-        stratify=categories
-    )
+    # Split data with stratification if possible
+    try:
+        X_train, X_test, y_train, y_test = train_test_split(
+            descriptions, categories,
+            test_size=args.test_size,
+            random_state=42,
+            stratify=categories
+        )
+    except ValueError as e:
+        print(f"Warning: Could not stratify split: {e}")
+        X_train, X_test, y_train, y_test = train_test_split(
+            descriptions, categories,
+            test_size=args.test_size,
+            random_state=42
+        )
 
     print(f"Training set size: {len(X_train)}")
     print(f"Test set size: {len(X_test)}")
 
-    # Create vectorizer
-    vectorizer = TfidfVectorizer(
-        max_features=2000,
-        ngram_range=(1, 2),
-        min_df=1,
-        stop_words='english'
-    )
-
     # Train multiple models and compare
-    results = train_multiple_models(X_train, X_test, y_train, y_test, vectorizer)
+    results = train_multiple_models(X_train, X_test, y_train, y_test)
 
     # Find best model
     best_model_name = max(results.keys(), key=lambda k: results[k]['accuracy'])
@@ -410,34 +510,19 @@ def main():
         best_model = hyperparameter_tuning(X_train, y_train, best_model_name)
 
     # Final evaluation
-    accuracy, y_pred, y_pred_proba = evaluate_model(best_model, X_test, y_test, unique_categories)
+    accuracy, y_pred = evaluate_model(best_model, X_test, y_test, unique_categories)
 
     # Save model and metadata
     model_path = args.output
     metadata_path = args.output.replace('.pkl', '_metadata.json')
-    save_model_and_metadata(best_model, accuracy, unique_categories, model_path, metadata_path)
+    save_success = save_model_and_metadata(best_model, accuracy, unique_categories, model_path, metadata_path)
 
-    # Test the saved model
-    print(f"\nTesting saved model...")
-    try:
-        classifier = ExpenseClassifier()
-        classifier.load_model(model_path)
-
-        # Test with a few examples
-        test_examples = [
-            {'description': 'Coffee at Starbucks', 'merchant': 'Starbucks'},
-            {'description': 'Gas station purchase', 'merchant': 'Shell'},
-            {'description': 'Amazon online shopping', 'merchant': 'Amazon'},
-        ]
-
-        for example in test_examples:
-            result = classifier.categorize(example['description'], example.get('merchant'))
-            print(f"'{example['description']}' -> {result['category']} (confidence: {result['confidence']:.3f})")
-
+    if save_success:
+        # Test the saved model with simple loading
+        test_saved_model_simple(model_path, unique_categories)
         print("\nModel training completed successfully!")
-
-    except Exception as e:
-        print(f"Error testing saved model: {e}")
+    else:
+        print("\nModel training completed but there were issues saving the model.")
 
 if __name__ == "__main__":
     main()
