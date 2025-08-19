@@ -136,3 +136,4 @@ shared/package-lock.json
 web-client/package-lock.json
 
 ml-service/reports
+ml-service/venv_py311
