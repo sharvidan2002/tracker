@@ -127,3 +127,12 @@ Thumbs.db
 
 # VS Code
 .vscode/settings.json
+
+#package-lock
+package-lock.json
+api-server/package-lock.json
+mobile-client/package-lock.json
+shared/package-lock.json
+web-client/package-lock.json
+
+ml-service/reports
