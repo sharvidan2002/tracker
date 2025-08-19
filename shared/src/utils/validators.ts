@@ -1,174 +1,153 @@
 import Joi from 'joi'
 
-// User Validation Schemas
+// Base validation schemas
+export const baseSchemas = {
+  id: Joi.string().guid({ version: 'uuidv4' }).required(),
+  email: Joi.string().email().lowercase().trim().max(255).required(),
+  password: Joi.string().min(8).max(128).required(),
+  name: Joi.string().trim().min(1).max(100).required(),
+  optionalName: Joi.string().trim().min(1).max(100).optional(),
+  phone: Joi.string().pattern(/^\+?[\d\s\-\(\)]{10,}$/).optional(),
+  url: Joi.string().uri().optional(),
+  currency: Joi.number().positive().precision(2).max(999999.99).required(),
+  optionalCurrency: Joi.number().positive().precision(2).max(999999.99).optional(),
+  date: Joi.date().iso().max('now').required(),
+  optionalDate: Joi.date().iso().optional(),
+  futureDate: Joi.date().iso().min('now').required(),
+  description: Joi.string().trim().min(1).max(500).optional(),
+  requiredDescription: Joi.string().trim().min(1).max(500).required(),
+}
+
+// User validation schemas
 export const userSchemas = {
   register: Joi.object({
-    email: Joi.string().email().required().messages({
-      'string.email': 'Please provide a valid email address',
-      'any.required': 'Email is required'
-    }),
-    password: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).required().messages({
-      'string.min': 'Password must be at least 8 characters long',
-      'string.pattern.base': 'Password must contain at least one lowercase letter, one uppercase letter, and one number',
-      'any.required': 'Password is required'
-    }),
-    firstName: Joi.string().min(2).max(50).pattern(/^[a-zA-Z\s]+$/).required().messages({
-      'string.min': 'First name must be at least 2 characters long',
-      'string.max': 'First name cannot exceed 50 characters',
-      'string.pattern.base': 'First name can only contain letters and spaces',
-      'any.required': 'First name is required'
-    }),
-    lastName: Joi.string().min(2).max(50).pattern(/^[a-zA-Z\s]+$/).required().messages({
-      'string.min': 'Last name must be at least 2 characters long',
-      'string.max': 'Last name cannot exceed 50 characters',
-      'string.pattern.base': 'Last name can only contain letters and spaces',
-      'any.required': 'Last name is required'
-    })
+    email: baseSchemas.email,
+    password: baseSchemas.password,
+    firstName: baseSchemas.name,
+    lastName: baseSchemas.name,
+    phone: baseSchemas.phone,
   }),
 
   login: Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().required()
+    email: baseSchemas.email,
+    password: Joi.string().required(),
   }),
 
   updateProfile: Joi.object({
-    firstName: Joi.string().min(2).max(50).pattern(/^[a-zA-Z\s]+$/),
-    lastName: Joi.string().min(2).max(50).pattern(/^[a-zA-Z\s]+$/),
-    email: Joi.string().email()
+    firstName: baseSchemas.optionalName,
+    lastName: baseSchemas.optionalName,
+    phone: baseSchemas.phone,
+    dateOfBirth: baseSchemas.optionalDate,
+    currency: Joi.string().length(3).uppercase().optional(),
+    timezone: Joi.string().optional(),
+    language: Joi.string().length(2).lowercase().optional(),
   }),
 
   changePassword: Joi.object({
     currentPassword: Joi.string().required(),
-    newPassword: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).required()
-  })
+    newPassword: baseSchemas.password,
+    confirmPassword: Joi.string().valid(Joi.ref('newPassword')).required()
+      .messages({ 'any.only': 'Passwords do not match' }),
+  }),
+
+  forgotPassword: Joi.object({
+    email: baseSchemas.email,
+  }),
+
+  resetPassword: Joi.object({
+    token: Joi.string().required(),
+    password: baseSchemas.password,
+    confirmPassword: Joi.string().valid(Joi.ref('password')).required()
+      .messages({ 'any.only': 'Passwords do not match' }),
+  }),
 }
 
-// Expense Validation Schemas
+// Expense validation schemas
 export const expenseSchemas = {
   create: Joi.object({
-    amount: Joi.number().positive().precision(2).max(1000000).required().messages({
-      'number.positive': 'Amount must be a positive number',
-      'number.precision': 'Amount can have at most 2 decimal places',
-      'number.max': 'Amount cannot exceed $1,000,000',
-      'any.required': 'Amount is required'
-    }),
-    description: Joi.string().min(1).max(255).trim().required().messages({
-      'string.min': 'Description cannot be empty',
-      'string.max': 'Description cannot exceed 255 characters',
-      'any.required': 'Description is required'
-    }),
-    category: Joi.string().max(100).trim().optional(),
-    merchant: Joi.string().max(100).trim().optional(),
-    date: Joi.date().iso().max('now').required().messages({
-      'date.format': 'Date must be in ISO format (YYYY-MM-DD)',
-      'date.max': 'Date cannot be in the future',
-      'any.required': 'Date is required'
-    }),
-    tags: Joi.array().items(Joi.string().max(50).trim()).max(10).optional(),
-    paymentMethod: Joi.string().valid(
-      'cash', 'credit_card', 'debit_card', 'bank_transfer', 'paypal',
-      'venmo', 'apple_pay', 'google_pay', 'cryptocurrency', 'check', 'other'
-    ).optional(),
-    location: Joi.object({
-      latitude: Joi.number().min(-90).max(90).required(),
-      longitude: Joi.number().min(-180).max(180).required(),
-      address: Joi.string().max(200).optional(),
-      city: Joi.string().max(100).optional(),
-      state: Joi.string().max(100).optional(),
-      country: Joi.string().max(100).optional()
-    }).optional()
+    amount: baseSchemas.currency,
+    description: baseSchemas.requiredDescription,
+    category: Joi.string().max(100).optional(),
+    merchant: Joi.string().trim().max(100).optional(),
+    date: baseSchemas.date,
+    tags: Joi.array().items(
+      Joi.string().max(50).trim().pattern(/^[a-zA-Z0-9_-]+$/)
+    ).max(10).unique().optional(),
+    receiptUrl: baseSchemas.url,
+    notes: Joi.string().max(1000).optional(),
   }),
 
   update: Joi.object({
-    amount: Joi.number().positive().precision(2).max(1000000).optional(),
-    description: Joi.string().min(1).max(255).trim().optional(),
-    category: Joi.string().max(100).trim().optional(),
-    merchant: Joi.string().max(100).trim().optional(),
-    date: Joi.date().iso().max('now').optional(),
-    tags: Joi.array().items(Joi.string().max(50).trim()).max(10).optional(),
-    paymentMethod: Joi.string().valid(
-      'cash', 'credit_card', 'debit_card', 'bank_transfer', 'paypal',
-      'venmo', 'apple_pay', 'google_pay', 'cryptocurrency', 'check', 'other'
-    ).optional()
+    amount: baseSchemas.optionalCurrency,
+    description: baseSchemas.description,
+    category: Joi.string().max(100).optional(),
+    merchant: Joi.string().trim().max(100).optional(),
+    date: baseSchemas.optionalDate,
+    tags: Joi.array().items(
+      Joi.string().max(50).trim().pattern(/^[a-zA-Z0-9_-]+$/)
+    ).max(10).unique().optional(),
+    receiptUrl: baseSchemas.url,
+    notes: Joi.string().max(1000).optional(),
   }),
 
-  filters: Joi.object({
+  query: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
     category: Joi.string().max(100).optional(),
     merchant: Joi.string().max(100).optional(),
     dateFrom: Joi.date().iso().optional(),
     dateTo: Joi.date().iso().min(Joi.ref('dateFrom')).optional(),
-    minAmount: Joi.number().min(0).optional(),
-    maxAmount: Joi.number().min(Joi.ref('minAmount')).optional(),
+    amountMin: Joi.number().positive().optional(),
+    amountMax: Joi.number().positive().min(Joi.ref('amountMin')).optional(),
     tags: Joi.array().items(Joi.string().max(50)).optional(),
-    paymentMethod: Joi.string().valid(
-      'cash', 'credit_card', 'debit_card', 'bank_transfer', 'paypal',
-      'venmo', 'apple_pay', 'google_pay', 'cryptocurrency', 'check', 'other'
-    ).optional(),
-    hasReceipt: Joi.boolean().optional(),
-    isRecurring: Joi.boolean().optional()
+    search: Joi.string().max(255).optional(),
+    sortBy: Joi.string().valid('date', 'amount', 'category', 'merchant', 'description').default('date'),
+    sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
   }),
-
-  search: Joi.object({
-    query: Joi.string().max(200).optional(),
-    page: Joi.number().integer().min(1).max(1000).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20),
-    sortBy: Joi.string().valid('date', 'amount', 'description', 'category', 'merchant', 'createdAt').default('date'),
-    sortOrder: Joi.string().valid('asc', 'desc').default('desc')
-  }).concat(expenseSchemas.filters)
 }
 
-// Budget Validation Schemas
+// Budget validation schemas
 export const budgetSchemas = {
   create: Joi.object({
-    name: Joi.string().min(1).max(100).trim().required().messages({
-      'string.min': 'Budget name cannot be empty',
-      'string.max': 'Budget name cannot exceed 100 characters',
-      'any.required': 'Budget name is required'
-    }),
-    category: Joi.string().max(100).trim().optional(),
-    amount: Joi.number().positive().precision(2).max(10000000).required().messages({
-      'number.positive': 'Budget amount must be positive',
-      'number.precision': 'Amount can have at most 2 decimal places',
-      'number.max': 'Budget amount cannot exceed $10,000,000',
-      'any.required': 'Budget amount is required'
-    }),
-    period: Joi.string().valid('weekly', 'monthly', 'quarterly', 'yearly', 'custom').required(),
+    name: baseSchemas.name,
+    amount: baseSchemas.currency,
+    category: Joi.string().max(100).required(),
+    period: Joi.string().valid('weekly', 'monthly', 'quarterly', 'yearly').required(),
+    startDate: baseSchemas.date,
+    endDate: baseSchemas.futureDate,
     alertThreshold: Joi.number().min(0).max(100).default(80),
-    alertsEnabled: Joi.boolean().default(true),
-    rollover: Joi.boolean().default(false),
-    tags: Joi.array().items(Joi.string().max(50).trim()).max(10).optional(),
-    description: Joi.string().max(500).trim().optional(),
-    startDate: Joi.date().iso().optional()
+    description: baseSchemas.description,
   }),
 
   update: Joi.object({
-    name: Joi.string().min(1).max(100).trim().optional(),
-    amount: Joi.number().positive().precision(2).max(10000000).optional(),
-    period: Joi.string().valid('weekly', 'monthly', 'quarterly', 'yearly', 'custom').optional(),
+    name: baseSchemas.optionalName,
+    amount: baseSchemas.optionalCurrency,
+    category: Joi.string().max(100).optional(),
+    period: Joi.string().valid('weekly', 'monthly', 'quarterly', 'yearly').optional(),
+    startDate: baseSchemas.optionalDate,
+    endDate: baseSchemas.optionalDate,
     alertThreshold: Joi.number().min(0).max(100).optional(),
-    alertsEnabled: Joi.boolean().optional(),
-    rollover: Joi.boolean().optional(),
-    tags: Joi.array().items(Joi.string().max(50).trim()).max(10).optional(),
-    description: Joi.string().max(500).trim().optional(),
-    isActive: Joi.boolean().optional()
+    description: baseSchemas.description,
+    isActive: Joi.boolean().optional(),
   }),
 
-  filters: Joi.object({
-    period: Joi.string().valid('weekly', 'monthly', 'quarterly', 'yearly', 'custom').optional(),
+  query: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
     category: Joi.string().max(100).optional(),
+    period: Joi.string().valid('weekly', 'monthly', 'quarterly', 'yearly').optional(),
     isActive: Joi.boolean().optional(),
-    tags: Joi.array().items(Joi.string().max(50)).optional(),
-    alertStatus: Joi.string().valid('ok', 'warning', 'exceeded').optional()
-  })
+    status: Joi.string().valid('on_track', 'warning', 'over_budget').optional(),
+    sortBy: Joi.string().valid('name', 'amount', 'category', 'period', 'createdAt').default('createdAt'),
+    sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
+  }),
 }
 
-// Common Validation Schemas
+// Common validation schemas
 export const commonSchemas = {
-  id: Joi.string().guid({ version: 'uuidv4' }).required(),
-
   pagination: Joi.object({
-    page: Joi.number().integer().min(1).max(1000).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(20)
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
   }),
 
   dateRange: Joi.object({
@@ -183,7 +162,7 @@ export const commonSchemas = {
 
   tags: Joi.array().items(
     Joi.string().max(50).trim().pattern(/^[a-zA-Z0-9_-]+$/)
-  ).max(10).unique()
+  ).max(10).unique(),
 }
 
 // ML/AI Validation Schemas
@@ -231,6 +210,30 @@ export const fileSchemas = {
   })
 }
 
+// Analytics validation schemas
+export const analyticsSchemas = {
+  dashboard: Joi.object({
+    period: Joi.string().valid('week', 'month', 'quarter', 'year').default('month'),
+    categories: Joi.array().items(Joi.string().max(100)).optional(),
+    dateFrom: Joi.date().iso().optional(),
+    dateTo: Joi.date().iso().min(Joi.ref('dateFrom')).optional(),
+  }),
+
+  trends: Joi.object({
+    period: Joi.string().valid('week', 'month', 'quarter', 'year').required(),
+    groupBy: Joi.string().valid('day', 'week', 'month', 'quarter').required(),
+    categories: Joi.array().items(Joi.string().max(100)).optional(),
+    dateFrom: Joi.date().iso().optional(),
+    dateTo: Joi.date().iso().min(Joi.ref('dateFrom')).optional(),
+  }),
+
+  comparison: Joi.object({
+    currentPeriod: commonSchemas.dateRange,
+    previousPeriod: commonSchemas.dateRange,
+    groupBy: Joi.string().valid('category', 'merchant', 'day', 'week', 'month').required(),
+  }),
+}
+
 // Helper Functions
 export const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -242,6 +245,10 @@ export const validatePassword = (password: string): { isValid: boolean; errors: 
 
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters long')
+  }
+
+  if (password.length > 128) {
+    errors.push('Password must be less than 128 characters long')
   }
 
   if (!/[a-z]/.test(password)) {
@@ -292,6 +299,47 @@ export const validateUrl = (url: string): boolean => {
   }
 }
 
+export const validateFileType = (file: any, allowedTypes: string[]): boolean => {
+  return allowedTypes.includes(file.mimetype)
+}
+
+export const validateFileSize = (file: any, maxSize: number): boolean => {
+  return file.size <= maxSize
+}
+
+export const validateCategory = (category: string, validCategories: string[]): boolean => {
+  return validCategories.includes(category)
+}
+
+export const validateTags = (tags: string[]): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = []
+  const tagRegex = /^[a-zA-Z0-9_-]+$/
+
+  if (tags.length > 10) {
+    errors.push('Maximum of 10 tags allowed')
+  }
+
+  const uniqueTags = new Set(tags)
+  if (uniqueTags.size !== tags.length) {
+    errors.push('Tags must be unique')
+  }
+
+  tags.forEach((tag, index) => {
+    if (!tag.trim()) {
+      errors.push(`Tag ${index + 1} cannot be empty`)
+    } else if (tag.length > 50) {
+      errors.push(`Tag ${index + 1} must be 50 characters or less`)
+    } else if (!tagRegex.test(tag)) {
+      errors.push(`Tag ${index + 1} contains invalid characters. Use only letters, numbers, hyphens, and underscores`)
+    }
+  })
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
+}
+
 // Schema validation helper
 export const validate = <T>(schema: Joi.ObjectSchema, data: any): { isValid: boolean; value?: T; errors?: string[] } => {
   const { error, value } = schema.validate(data, { abortEarly: false })
@@ -307,4 +355,64 @@ export const validate = <T>(schema: Joi.ObjectSchema, data: any): { isValid: boo
     isValid: true,
     value: value as T
   }
+}
+
+// Custom validation functions
+export const customValidators = {
+  isValidExpenseAmount: (amount: number): boolean => {
+    return validateCurrency(amount) && amount <= 999999.99
+  },
+
+  isValidBudgetPeriod: (startDate: Date, endDate: Date, period: string): boolean => {
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    switch (period) {
+      case 'weekly':
+        return diffDays >= 7 && diffDays <= 14
+      case 'monthly':
+        return diffDays >= 28 && diffDays <= 31
+      case 'quarterly':
+        return diffDays >= 89 && diffDays <= 92
+      case 'yearly':
+        return diffDays >= 365 && diffDays <= 366
+      default:
+        return false
+    }
+  },
+
+  isValidDateRange: (startDate: Date, endDate: Date, maxDays: number = 365): boolean => {
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return startDate <= endDate && diffDays <= maxDays
+  },
+
+  isValidPercentage: (value: number): boolean => {
+    return Number.isFinite(value) && value >= 0 && value <= 100
+  },
+
+  isValidTimezone: (timezone: string): boolean => {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: timezone })
+      return true
+    } catch {
+      return false
+    }
+  },
+
+  isValidCurrencyCode: (code: string): boolean => {
+    const validCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'BRL']
+    return validCurrencies.includes(code.toUpperCase())
+  },
+}
+
+// Export all schemas
+export const schemas = {
+  ...userSchemas,
+  ...expenseSchemas,
+  ...budgetSchemas,
+  ...commonSchemas,
+  ...mlSchemas,
+  ...fileSchemas,
+  ...analyticsSchemas,
 }

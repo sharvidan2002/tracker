@@ -1,290 +1,375 @@
-import { format, formatDistance, parseISO, isValid, startOfDay, endOfDay } from 'date-fns'
+import { format, formatDistanceToNow, parseISO, isValid, differenceInDays, addDays, startOfDay, endOfDay } from 'date-fns'
 
 // Currency Formatting
 export const formatCurrency = (
   amount: number,
-  currency = 'USD',
-  locale = 'en-US',
-  options: Intl.NumberFormatOptions = {}
+  currency: string = 'USD',
+  locale: string = 'en-US',
+  options?: Intl.NumberFormatOptions
 ): string => {
-  const defaultOptions: Intl.NumberFormatOptions = {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    ...options
-  }
-
   try {
-    return new Intl.NumberFormat(locale, defaultOptions).format(amount)
+    const formatter = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      ...options,
+    })
+    return formatter.format(amount)
   } catch (error) {
-    console.warn('Currency formatting failed:', error)
+    // Fallback to simple formatting if Intl fails
     return `$${amount.toFixed(2)}`
   }
 }
 
-export const formatCurrencyCompact = (amount: number, currency = 'USD', locale = 'en-US'): string => {
-  const options: Intl.NumberFormatOptions = {
-    style: 'currency',
-    currency,
-    notation: 'compact',
-    maximumFractionDigits: 1
-  }
-
+export const formatCurrencyCompact = (
+  amount: number,
+  currency: string = 'USD',
+  locale: string = 'en-US'
+): string => {
   try {
-    return new Intl.NumberFormat(locale, options).format(amount)
+    const formatter = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+      notation: 'compact',
+      compactDisplay: 'short',
+    })
+    return formatter.format(amount)
   } catch (error) {
-    console.warn('Compact currency formatting failed:', error)
-
-    // Fallback to manual compact formatting
+    // Manual compact formatting
     if (amount >= 1000000) {
       return `$${(amount / 1000000).toFixed(1)}M`
     } else if (amount >= 1000) {
       return `$${(amount / 1000).toFixed(1)}K`
-    } else {
-      return `$${amount.toFixed(2)}`
     }
+    return `$${amount.toFixed(2)}`
   }
 }
 
-export const parseCurrency = (currencyString: string): number => {
-  // Remove currency symbols and formatting
-  const cleanString = currencyString.replace(/[$,\s]/g, '')
-  const amount = parseFloat(cleanString)
-  return isNaN(amount) ? 0 : amount
+export const parseCurrency = (value: string): number => {
+  // Remove currency symbols, spaces, and commas
+  const cleaned = value.replace(/[$£€¥₹₽¢,\s]/g, '')
+  const parsed = parseFloat(cleaned)
+  return isNaN(parsed) ? 0 : parsed
 }
 
 // Number Formatting
 export const formatNumber = (
-  num: number,
-  locale = 'en-US',
-  options: Intl.NumberFormatOptions = {}
+  value: number,
+  locale: string = 'en-US',
+  options?: Intl.NumberFormatOptions
 ): string => {
   try {
-    return new Intl.NumberFormat(locale, options).format(num)
+    const formatter = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+      ...options,
+    })
+    return formatter.format(value)
   } catch (error) {
-    console.warn('Number formatting failed:', error)
-    return num.toString()
+    return value.toLocaleString()
   }
 }
 
 export const formatPercentage = (
   value: number,
-  decimals = 1,
-  locale = 'en-US'
+  locale: string = 'en-US',
+  decimals: number = 1
 ): string => {
-  const options: Intl.NumberFormatOptions = {
-    style: 'percent',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals
-  }
-
   try {
-    return new Intl.NumberFormat(locale, options).format(value / 100)
+    const formatter = new Intl.NumberFormat(locale, {
+      style: 'percent',
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    })
+    return formatter.format(value / 100)
   } catch (error) {
-    console.warn('Percentage formatting failed:', error)
     return `${value.toFixed(decimals)}%`
   }
 }
 
-export const formatFileSize = (bytes: number): string => {
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-
-  if (bytes === 0) return '0 B'
-
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  const size = bytes / Math.pow(1024, i)
-
-  return `${size.toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`
+export const formatCompactNumber = (value: number, locale: string = 'en-US'): string => {
+  try {
+    const formatter = new Intl.NumberFormat(locale, {
+      notation: 'compact',
+      compactDisplay: 'short',
+    })
+    return formatter.format(value)
+  } catch (error) {
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(1)}M`
+    } else if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}K`
+    }
+    return value.toString()
+  }
 }
 
 // Date Formatting
 export const formatDate = (
-  date: string | Date,
-  formatStr = 'MMM dd, yyyy',
-  fallback = 'Invalid Date'
+  date: Date | string | number,
+  formatString: string = 'MMM dd, yyyy',
+  options?: { locale?: Locale }
 ): string => {
   try {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date
-
+    const dateObj = typeof date === 'string' ? parseISO(date) : new Date(date)
     if (!isValid(dateObj)) {
-      return fallback
+      return 'Invalid Date'
     }
-
-    return format(dateObj, formatStr)
+    return format(dateObj, formatString, options)
   } catch (error) {
-    console.warn('Date formatting failed:', error)
-    return fallback
-  }
-}
-
-export const formatRelativeDate = (date: string | Date): string => {
-  try {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date
-
-    if (!isValid(dateObj)) {
-      return 'Invalid date'
-    }
-
-    return formatDistance(dateObj, new Date(), { addSuffix: true })
-  } catch (error) {
-    console.warn('Relative date formatting failed:', error)
-    return 'Unknown'
+    return 'Invalid Date'
   }
 }
 
 export const formatDateTime = (
-  date: string | Date,
-  options: {
-    includeTime?: boolean
-    timeFormat?: '12' | '24'
-    locale?: string
-  } = {}
+  date: Date | string | number,
+  formatString: string = 'MMM dd, yyyy HH:mm',
+  options?: { locale?: Locale }
 ): string => {
-  const { includeTime = true, timeFormat = '12', locale = 'en-US' } = options
+  return formatDate(date, formatString, options)
+}
 
+export const formatRelativeTime = (
+  date: Date | string | number,
+  options?: { addSuffix?: boolean; locale?: Locale }
+): string => {
   try {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date
-
+    const dateObj = typeof date === 'string' ? parseISO(date) : new Date(date)
     if (!isValid(dateObj)) {
-      return 'Invalid date'
+      return 'Invalid Date'
     }
-
-    const formatOptions: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }
-
-    if (includeTime) {
-      formatOptions.hour = 'numeric'
-      formatOptions.minute = '2-digit'
-      formatOptions.hour12 = timeFormat === '12'
-    }
-
-    return new Intl.DateTimeFormat(locale, formatOptions).format(dateObj)
+    return formatDistanceToNow(dateObj, { addSuffix: true, ...options })
   } catch (error) {
-    console.warn('DateTime formatting failed:', error)
-    return formatDate(date)
+    return 'Invalid Date'
   }
 }
 
-export const getDateRange = (period: 'week' | 'month' | 'year' | 'day'): { start: Date; end: Date } => {
-  const now = new Date()
-  const start = new Date()
-  const end = new Date()
+export const formatDateRange = (
+  startDate: Date | string,
+  endDate: Date | string,
+  formatString: string = 'MMM dd'
+): string => {
+  try {
+    const start = typeof startDate === 'string' ? parseISO(startDate) : startDate
+    const end = typeof endDate === 'string' ? parseISO(endDate) : endDate
 
-  switch (period) {
-    case 'day':
-      return {
-        start: startOfDay(now),
-        end: endOfDay(now)
-      }
-    case 'week':
-      start.setDate(now.getDate() - now.getDay())
-      end.setDate(start.getDate() + 6)
-      break
-    case 'month':
-      start.setDate(1)
-      end.setMonth(start.getMonth() + 1, 0)
-      break
-    case 'year':
-      start.setMonth(0, 1)
-      end.setMonth(11, 31)
-      break
+    if (!isValid(start) || !isValid(end)) {
+      return 'Invalid Date Range'
+    }
+
+    const startFormatted = format(start, formatString)
+    const endFormatted = format(end, formatString)
+
+    // If same date, return single date
+    if (startFormatted === endFormatted) {
+      return startFormatted
+    }
+
+    // If same year, omit year from start date
+    if (start.getFullYear() === end.getFullYear()) {
+      const startWithoutYear = format(start, 'MMM dd')
+      const endWithYear = format(end, 'MMM dd, yyyy')
+      return `${startWithoutYear} - ${endWithYear}`
+    }
+
+    return `${startFormatted} - ${endFormatted}`
+  } catch (error) {
+    return 'Invalid Date Range'
   }
+}
 
-  return {
-    start: startOfDay(start),
-    end: endOfDay(end)
+export const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = seconds % 60
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${remainingSeconds}s`
+  } else if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`
+  } else {
+    return `${remainingSeconds}s`
   }
 }
 
 // Text Formatting
-export const formatCategoryName = (category: string): string => {
-  return category
-    .split(/[-_\s]+/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
+export const formatName = (firstName: string, lastName: string): string => {
+  const first = firstName?.trim() || ''
+  const last = lastName?.trim() || ''
+
+  if (first && last) {
+    return `${first} ${last}`
+  } else if (first) {
+    return first
+  } else if (last) {
+    return last
+  }
+
+  return 'Unknown User'
 }
 
-export const formatMerchantName = (merchant: string): string => {
-  // Clean up merchant names
-  return merchant
-    .replace(/\b(LLC|INC|CORP|LTD|CO)\b/gi, '')
-    .replace(/[*#]+/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
+export const formatInitials = (firstName: string, lastName: string): string => {
+  const first = firstName?.trim()?.[0]?.toUpperCase() || ''
+  const last = lastName?.trim()?.[0]?.toUpperCase() || ''
+
+  if (first && last) {
+    return `${first}${last}`
+  } else if (first) {
+    return first
+  } else if (last) {
+    return last
+  }
+
+  return '??'
 }
 
-export const truncateText = (text: string, maxLength: number, suffix = '...'): string => {
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength - suffix.length) + suffix
+export const truncateText = (
+  text: string,
+  maxLength: number,
+  suffix: string = '...'
+): string => {
+  if (text.length <= maxLength) {
+    return text
+  }
+
+  const truncated = text.slice(0, maxLength - suffix.length)
+  return `${truncated}${suffix}`
 }
 
-export const generateInitials = (firstName: string, lastName: string): string => {
-  const first = firstName?.charAt(0)?.toUpperCase() || ''
-  const last = lastName?.charAt(0)?.toUpperCase() || ''
-  return `${first}${last}`
-}
-
-export const slugify = (text: string): string => {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+export const capitalizeFirst = (text: string): string => {
+  if (!text) return ''
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
 }
 
 export const capitalizeWords = (text: string): string => {
+  if (!text) return ''
   return text
-    .toLowerCase()
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(word => capitalizeFirst(word))
     .join(' ')
 }
 
-// Array and Object Formatting
+export const formatCamelCase = (text: string): string => {
+  return text
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, str => str.toUpperCase())
+    .trim()
+}
+
+export const formatKebabCase = (text: string): string => {
+  return text
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .toLowerCase()
+}
+
+export const formatSnakeCase = (text: string): string => {
+  return text
+    .replace(/([a-z])([A-Z])/g, '$1_$2')
+    .replace(/[\s-]+/g, '_')
+    .toLowerCase()
+}
+
+// File Size Formatting
+export const formatFileSize = (bytes: number, decimals: number = 2): string => {
+  if (bytes === 0) return '0 Bytes'
+
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB']
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+}
+
+// Phone Number Formatting
+export const formatPhoneNumber = (phoneNumber: string, country: string = 'US'): string => {
+  // Remove all non-digit characters
+  const digits = phoneNumber.replace(/\D/g, '')
+
+  if (country === 'US') {
+    if (digits.length === 10) {
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+    } else if (digits.length === 11 && digits[0] === '1') {
+      return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
+    }
+  }
+
+  // Generic formatting for other countries
+  if (digits.length > 10) {
+    return `+${digits.slice(0, -10)} ${digits.slice(-10, -7)} ${digits.slice(-7, -4)} ${digits.slice(-4)}`
+  } else if (digits.length === 10) {
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+  }
+
+  return phoneNumber // Return original if no formatting applies
+}
+
+// Address Formatting
+export const formatAddress = (address: {
+  street?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  country?: string
+}): string => {
+  const parts = []
+
+  if (address.street) parts.push(address.street)
+  if (address.city) parts.push(address.city)
+  if (address.state) parts.push(address.state)
+  if (address.zipCode) parts.push(address.zipCode)
+  if (address.country) parts.push(address.country)
+
+  return parts.join(', ')
+}
+
+// List Formatting
 export const formatList = (
   items: string[],
-  options: {
-    conjunction?: 'and' | 'or'
-    limit?: number
-    moreText?: string
-  } = {}
+  conjunction: string = 'and',
+  maxItems?: number
 ): string => {
-  const { conjunction = 'and', limit, moreText = 'more' } = options
-
   if (items.length === 0) return ''
   if (items.length === 1) return items[0]
 
   let displayItems = items
-  let hasMore = false
+  let moreText = ''
 
-  if (limit && items.length > limit) {
-    displayItems = items.slice(0, limit)
-    hasMore = true
+  if (maxItems && items.length > maxItems) {
+    displayItems = items.slice(0, maxItems)
+    const remainingCount = items.length - maxItems
+    moreText = ` ${conjunction} ${remainingCount} more`
   }
 
-  if (displayItems.length === 1) {
-    return hasMore
-      ? `${displayItems[0]} ${conjunction} ${items.length - 1} ${moreText}`
-      : displayItems[0]
+  if (displayItems.length === 2) {
+    return `${displayItems[0]} ${conjunction} ${displayItems[1]}${moreText}`
   }
 
   const lastItem = displayItems.pop()
-  const result = `${displayItems.join(', ')} ${conjunction} ${lastItem}`
+  const result = `${displayItems.join(', ')}, ${conjunction} ${lastItem}`
 
-  if (hasMore) {
-    const remainingCount = items.length - limit!
-    return `${result} ${conjunction} ${remainingCount} ${moreText}`
+  if (moreText) {
+    return `${result}${moreText}`
   }
 
   return result
+}
+
+export const formatTagList = (
+  tags: string[],
+  maxTags: number = 3,
+  moreText: string = 'more'
+): string => {
+  if (tags.length === 0) return ''
+  if (tags.length <= maxTags) return tags.join(', ')
+
+  const displayTags = tags.slice(0, maxTags)
+  const remainingCount = tags.length - maxTags
+
+  return `${displayTags.join(', ')} and ${remainingCount} ${moreText}`
 }
 
 // Validation Helpers
@@ -305,6 +390,29 @@ export const isValidUrl = (url: string): boolean => {
 export const isValidPhoneNumber = (phone: string): boolean => {
   const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/
   return phoneRegex.test(phone)
+}
+
+export const isValidCreditCard = (number: string): boolean => {
+  // Luhn algorithm
+  const digits = number.replace(/\D/g, '')
+  let sum = 0
+  let isEven = false
+
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let digit = parseInt(digits[i])
+
+    if (isEven) {
+      digit *= 2
+      if (digit > 9) {
+        digit -= 9
+      }
+    }
+
+    sum += digit
+    isEven = !isEven
+  }
+
+  return sum % 10 === 0 && digits.length >= 13 && digits.length <= 19
 }
 
 // Utility Functions
@@ -377,4 +485,58 @@ export const groupBy = <T, K extends keyof any>(
     groups[key].push(item)
     return groups
   }, {} as Record<K, T[]>)
+}
+
+export const sortBy = <T>(
+  array: T[],
+  keyFn: (item: T) => any,
+  direction: 'asc' | 'desc' = 'asc'
+): T[] => {
+  return [...array].sort((a, b) => {
+    const aValue = keyFn(a)
+    const bValue = keyFn(b)
+
+    if (aValue < bValue) return direction === 'asc' ? -1 : 1
+    if (aValue > bValue) return direction === 'asc' ? 1 : -1
+    return 0
+  })
+}
+
+export const unique = <T>(array: T[], keyFn?: (item: T) => any): T[] => {
+  if (!keyFn) {
+    return [...new Set(array)]
+  }
+
+  const seen = new Set()
+  return array.filter(item => {
+    const key = keyFn(item)
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
+// Color Formatting
+export const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null
+}
+
+export const rgbToHex = (r: number, g: number, b: number): string => {
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
+}
+
+export const getContrastColor = (backgroundColor: string): 'black' | 'white' => {
+  const rgb = hexToRgb(backgroundColor)
+  if (!rgb) return 'black'
+
+  // Calculate relative luminance
+  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255
+  return luminance > 0.5 ? 'black' : 'white'
 }

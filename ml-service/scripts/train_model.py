@@ -11,12 +11,26 @@ import numpy as np
 from datetime import datetime
 import argparse
 import json
+import joblib
+import warnings
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.expense_classifier import ExpenseClassifier
 from config import Config
+
+# Suppress warnings
+warnings.filterwarnings('ignore')
 
 def load_training_data(data_path: str) -> list:
     """Load training data from CSV file."""
@@ -35,13 +49,23 @@ def load_training_data(data_path: str) -> list:
             print(f"Missing required columns: {missing_columns}")
             return []
 
+        # Clean and validate data
+        df = df.dropna(subset=['description', 'category'])
+        df['description'] = df['description'].astype(str).str.strip()
+        df['category'] = df['category'].astype(str).str.strip()
+        df['merchant'] = df.get('merchant', '').astype(str).str.strip()
+
+        # Remove empty descriptions or categories
+        df = df[df['description'].str.len() > 0]
+        df = df[df['category'].str.len() > 0]
+
         # Convert to list of dictionaries
         training_data = []
         for _, row in df.iterrows():
             training_data.append({
-                'description': str(row['description']),
-                'merchant': str(row.get('merchant', '')) if pd.notna(row.get('merchant')) else '',
-                'category': str(row['category'])
+                'description': row['description'],
+                'merchant': row['merchant'] if pd.notna(row.get('merchant')) and row['merchant'] else '',
+                'category': row['category']
             })
 
         print(f"Loaded {len(training_data)} training samples from {data_path}")
@@ -53,268 +77,367 @@ def load_training_data(data_path: str) -> list:
 
 def create_synthetic_data() -> list:
     """Create synthetic training data if no CSV file is available."""
+    print("Creating synthetic training data...")
+
     synthetic_data = [
         # Food & Dining
-        {'description': 'McDonald\'s breakfast', 'merchant': 'McDonald\'s', 'category': 'Food & Dining'},
         {'description': 'Starbucks coffee', 'merchant': 'Starbucks', 'category': 'Food & Dining'},
-        {'description': 'Grocery shopping', 'merchant': 'Whole Foods', 'category': 'Food & Dining'},
-        {'description': 'Pizza delivery', 'merchant': 'Domino\'s', 'category': 'Food & Dining'},
+        {'description': 'McDonald lunch', 'merchant': 'McDonald\'s', 'category': 'Food & Dining'},
+        {'description': 'Pizza delivery', 'merchant': 'Dominos', 'category': 'Food & Dining'},
+        {'description': 'Grocery shopping', 'merchant': 'Walmart', 'category': 'Food & Dining'},
         {'description': 'Restaurant dinner', 'merchant': 'Olive Garden', 'category': 'Food & Dining'},
-        {'description': 'Fast food lunch', 'merchant': 'Chipotle', 'category': 'Food & Dining'},
-        {'description': 'Coffee and pastry', 'merchant': 'Local Cafe', 'category': 'Food & Dining'},
-        {'description': 'Sushi dinner', 'merchant': 'Sushi Palace', 'category': 'Food & Dining'},
+        {'description': 'Coffee shop', 'merchant': 'Local Cafe', 'category': 'Food & Dining'},
+        {'description': 'Fast food lunch', 'merchant': 'Burger King', 'category': 'Food & Dining'},
+        {'description': 'Bakery purchase', 'merchant': 'Sweet Treats', 'category': 'Food & Dining'},
 
         # Transportation
         {'description': 'Gas station fill up', 'merchant': 'Shell', 'category': 'Transportation'},
-        {'description': 'Uber ride to airport', 'merchant': 'Uber', 'category': 'Transportation'},
+        {'description': 'Uber ride', 'merchant': 'Uber', 'category': 'Transportation'},
+        {'description': 'Taxi fare', 'merchant': 'Yellow Cab', 'category': 'Transportation'},
         {'description': 'Bus ticket', 'merchant': 'Metro Transit', 'category': 'Transportation'},
-        {'description': 'Parking meter downtown', 'merchant': 'City Parking', 'category': 'Transportation'},
+        {'description': 'Parking fee', 'merchant': 'ParkWhiz', 'category': 'Transportation'},
         {'description': 'Car maintenance', 'merchant': 'Auto Shop', 'category': 'Transportation'},
-        {'description': 'Lyft ride home', 'merchant': 'Lyft', 'category': 'Transportation'},
-        {'description': 'Train ticket', 'merchant': 'Amtrak', 'category': 'Transportation'},
-        {'description': 'Oil change service', 'merchant': 'Jiffy Lube', 'category': 'Transportation'},
+        {'description': 'Oil change', 'merchant': 'Jiffy Lube', 'category': 'Transportation'},
+        {'description': 'Car wash', 'merchant': 'Clean Car', 'category': 'Transportation'},
 
         # Shopping
-        {'description': 'Online shopping', 'merchant': 'Amazon', 'category': 'Shopping'},
+        {'description': 'Amazon purchase', 'merchant': 'Amazon', 'category': 'Shopping'},
         {'description': 'Clothes shopping', 'merchant': 'Target', 'category': 'Shopping'},
-        {'description': 'Electronics purchase', 'merchant': 'Best Buy', 'category': 'Shopping'},
-        {'description': 'Home improvement supplies', 'merchant': 'Home Depot', 'category': 'Shopping'},
-        {'description': 'New shoes', 'merchant': 'Nike Store', 'category': 'Shopping'},
-        {'description': 'Books and magazines', 'merchant': 'Barnes & Noble', 'category': 'Shopping'},
-        {'description': 'Sporting goods', 'merchant': 'Dick\'s Sporting Goods', 'category': 'Shopping'},
-        {'description': 'Furniture shopping', 'merchant': 'IKEA', 'category': 'Shopping'},
+        {'description': 'Electronics store', 'merchant': 'Best Buy', 'category': 'Shopping'},
+        {'description': 'Home supplies', 'merchant': 'Home Depot', 'category': 'Shopping'},
+        {'description': 'Book purchase', 'merchant': 'Barnes & Noble', 'category': 'Shopping'},
+        {'description': 'Online shopping', 'merchant': 'eBay', 'category': 'Shopping'},
+        {'description': 'Pharmacy purchase', 'merchant': 'CVS', 'category': 'Shopping'},
+        {'description': 'Pet supplies', 'merchant': 'PetSmart', 'category': 'Shopping'},
 
         # Entertainment
         {'description': 'Movie tickets', 'merchant': 'AMC Theaters', 'category': 'Entertainment'},
-        {'description': 'Netflix subscription', 'merchant': 'Netflix', 'category': 'Entertainment'},
         {'description': 'Concert tickets', 'merchant': 'Ticketmaster', 'category': 'Entertainment'},
+        {'description': 'Streaming service', 'merchant': 'Netflix', 'category': 'Entertainment'},
         {'description': 'Video games', 'merchant': 'GameStop', 'category': 'Entertainment'},
-        {'description': 'Spotify premium', 'merchant': 'Spotify', 'category': 'Entertainment'},
+        {'description': 'Sports event', 'merchant': 'Stadium', 'category': 'Entertainment'},
         {'description': 'Bowling night', 'merchant': 'Strike Zone', 'category': 'Entertainment'},
-        {'description': 'Theme park visit', 'merchant': 'Disneyland', 'category': 'Entertainment'},
-        {'description': 'Sports event tickets', 'merchant': 'StubHub', 'category': 'Entertainment'},
+        {'description': 'Theme park', 'merchant': 'Disney World', 'category': 'Entertainment'},
+        {'description': 'Museum visit', 'merchant': 'Art Museum', 'category': 'Entertainment'},
 
         # Bills & Utilities
-        {'description': 'Electric bill payment', 'merchant': 'PG&E', 'category': 'Bills & Utilities'},
-        {'description': 'Internet service', 'merchant': 'Comcast', 'category': 'Bills & Utilities'},
+        {'description': 'Electric bill', 'merchant': 'Electric Company', 'category': 'Bills & Utilities'},
+        {'description': 'Internet bill', 'merchant': 'Comcast', 'category': 'Bills & Utilities'},
         {'description': 'Phone bill', 'merchant': 'Verizon', 'category': 'Bills & Utilities'},
-        {'description': 'Water utility bill', 'merchant': 'Water Department', 'category': 'Bills & Utilities'},
-        {'description': 'Insurance payment', 'merchant': 'State Farm', 'category': 'Bills & Utilities'},
-        {'description': 'Cable TV service', 'merchant': 'DirectTV', 'category': 'Bills & Utilities'},
-        {'description': 'Garbage collection', 'merchant': 'Waste Management', 'category': 'Bills & Utilities'},
-        {'description': 'HOA fees', 'merchant': 'Property Management', 'category': 'Bills & Utilities'},
+        {'description': 'Water bill', 'merchant': 'Water Department', 'category': 'Bills & Utilities'},
+        {'description': 'Rent payment', 'merchant': 'Property Management', 'category': 'Bills & Utilities'},
+        {'description': 'Insurance premium', 'merchant': 'State Farm', 'category': 'Bills & Utilities'},
+        {'description': 'Credit card payment', 'merchant': 'Chase Bank', 'category': 'Bills & Utilities'},
+        {'description': 'Loan payment', 'merchant': 'Bank of America', 'category': 'Bills & Utilities'},
 
         # Healthcare
-        {'description': 'Doctor visit copay', 'merchant': 'Kaiser Permanente', 'category': 'Healthcare'},
-        {'description': 'Prescription medication', 'merchant': 'CVS Pharmacy', 'category': 'Healthcare'},
-        {'description': 'Dental cleaning', 'merchant': 'Dental Associates', 'category': 'Healthcare'},
-        {'description': 'Eye exam', 'merchant': 'LensCrafters', 'category': 'Healthcare'},
-        {'description': 'Vitamins and supplements', 'merchant': 'Walgreens', 'category': 'Healthcare'},
-        {'description': 'Physical therapy', 'merchant': 'Sports Medicine', 'category': 'Healthcare'},
-        {'description': 'Urgent care visit', 'merchant': 'Urgent Care Center', 'category': 'Healthcare'},
-        {'description': 'Blood test', 'merchant': 'LabCorp', 'category': 'Healthcare'},
+        {'description': 'Doctor visit', 'merchant': 'Medical Center', 'category': 'Healthcare'},
+        {'description': 'Pharmacy prescription', 'merchant': 'Walgreens', 'category': 'Healthcare'},
+        {'description': 'Dentist appointment', 'merchant': 'Dental Clinic', 'category': 'Healthcare'},
+        {'description': 'Eye exam', 'merchant': 'Vision Center', 'category': 'Healthcare'},
+        {'description': 'Physical therapy', 'merchant': 'PT Clinic', 'category': 'Healthcare'},
+        {'description': 'Lab tests', 'merchant': 'LabCorp', 'category': 'Healthcare'},
+        {'description': 'Hospital bill', 'merchant': 'General Hospital', 'category': 'Healthcare'},
+        {'description': 'Urgent care', 'merchant': 'Urgent Care Center', 'category': 'Healthcare'},
 
         # Travel
-        {'description': 'Hotel accommodation', 'merchant': 'Marriott', 'category': 'Travel'},
-        {'description': 'Flight to Chicago', 'merchant': 'United Airlines', 'category': 'Travel'},
-        {'description': 'Rental car', 'merchant': 'Hertz', 'category': 'Travel'},
-        {'description': 'Vacation resort', 'merchant': 'Hyatt Resort', 'category': 'Travel'},
+        {'description': 'Flight booking', 'merchant': 'Delta Airlines', 'category': 'Travel'},
+        {'description': 'Hotel reservation', 'merchant': 'Marriott', 'category': 'Travel'},
+        {'description': 'Car rental', 'merchant': 'Hertz', 'category': 'Travel'},
+        {'description': 'Travel insurance', 'merchant': 'Travel Guard', 'category': 'Travel'},
         {'description': 'Airport parking', 'merchant': 'Airport Authority', 'category': 'Travel'},
-        {'description': 'Travel booking fee', 'merchant': 'Expedia', 'category': 'Travel'},
-        {'description': 'Cruise vacation', 'merchant': 'Royal Caribbean', 'category': 'Travel'},
-        {'description': 'Tour guide service', 'merchant': 'City Tours', 'category': 'Travel'},
-
-        # Education
-        {'description': 'Online course', 'merchant': 'Udemy', 'category': 'Education'},
-        {'description': 'Textbooks', 'merchant': 'Pearson', 'category': 'Education'},
-        {'description': 'Professional certification', 'merchant': 'Microsoft', 'category': 'Education'},
-        {'description': 'Workshop attendance', 'merchant': 'Learning Center', 'category': 'Education'},
-        {'description': 'School supplies', 'merchant': 'Staples', 'category': 'Education'},
-        {'description': 'Educational software', 'merchant': 'Adobe', 'category': 'Education'},
-        {'description': 'Language lessons', 'merchant': 'Language School', 'category': 'Education'},
-        {'description': 'Music lessons', 'merchant': 'Music Academy', 'category': 'Education'},
-
-        # Personal Care
-        {'description': 'Haircut and styling', 'merchant': 'Great Clips', 'category': 'Personal Care'},
-        {'description': 'Spa treatment', 'merchant': 'Day Spa', 'category': 'Personal Care'},
-        {'description': 'Manicure and pedicure', 'merchant': 'Nail Salon', 'category': 'Personal Care'},
-        {'description': 'Skincare products', 'merchant': 'Sephora', 'category': 'Personal Care'},
-        {'description': 'Makeup purchase', 'merchant': 'Ulta Beauty', 'category': 'Personal Care'},
-        {'description': 'Gym membership', 'merchant': '24 Hour Fitness', 'category': 'Personal Care'},
-        {'description': 'Massage therapy', 'merchant': 'Massage Envy', 'category': 'Personal Care'},
-        {'description': 'Personal trainer', 'merchant': 'Fitness First', 'category': 'Personal Care'},
-
-        # Gifts & Donations
-        {'description': 'Birthday gift', 'merchant': 'Gift Shop', 'category': 'Gifts & Donations'},
-        {'description': 'Charity donation', 'merchant': 'Red Cross', 'category': 'Gifts & Donations'},
-        {'description': 'Church offering', 'merchant': 'Local Church', 'category': 'Gifts & Donations'},
-        {'description': 'Wedding present', 'merchant': 'Registry Store', 'category': 'Gifts & Donations'},
-        {'description': 'Holiday gifts', 'merchant': 'Department Store', 'category': 'Gifts & Donations'},
-        {'description': 'Fundraiser contribution', 'merchant': 'School Foundation', 'category': 'Gifts & Donations'},
-        {'description': 'Baby shower gift', 'merchant': 'Baby Store', 'category': 'Gifts & Donations'},
-        {'description': 'Thank you gift', 'merchant': 'Flower Shop', 'category': 'Gifts & Donations'},
-
-        # Business
-        {'description': 'Office supplies', 'merchant': 'Staples', 'category': 'Business'},
-        {'description': 'Business lunch', 'merchant': 'Restaurant', 'category': 'Business'},
-        {'description': 'Conference registration', 'merchant': 'Event Management', 'category': 'Business'},
-        {'description': 'Professional software', 'merchant': 'Microsoft', 'category': 'Business'},
-        {'description': 'Business cards', 'merchant': 'Print Shop', 'category': 'Business'},
-        {'description': 'Coworking space', 'merchant': 'WeWork', 'category': 'Business'},
-        {'description': 'Marketing materials', 'merchant': 'FedEx Office', 'category': 'Business'},
-        {'description': 'Professional development', 'merchant': 'Training Institute', 'category': 'Business'},
-
-        # Other
-        {'description': 'ATM withdrawal', 'merchant': 'Bank ATM', 'category': 'Other'},
-        {'description': 'Bank fees', 'merchant': 'Chase Bank', 'category': 'Other'},
-        {'description': 'Money transfer', 'merchant': 'Western Union', 'category': 'Other'},
-        {'description': 'Investment contribution', 'merchant': 'Fidelity', 'category': 'Other'},
-        {'description': 'Tax preparation', 'merchant': 'H&R Block', 'category': 'Other'},
-        {'description': 'Legal services', 'merchant': 'Law Firm', 'category': 'Other'},
-        {'description': 'Accounting services', 'merchant': 'CPA Office', 'category': 'Other'},
-        {'description': 'Miscellaneous expense', 'merchant': 'Various', 'category': 'Other'},
+        {'description': 'Vacation package', 'merchant': 'Expedia', 'category': 'Travel'},
+        {'description': 'Train ticket', 'merchant': 'Amtrak', 'category': 'Travel'},
+        {'description': 'Travel gear', 'merchant': 'REI', 'category': 'Travel'},
     ]
 
-    # Duplicate the data to reach minimum training samples
-    multiplier = max(1, Config.MIN_TRAINING_SAMPLES // len(synthetic_data) + 1)
-    extended_data = synthetic_data * multiplier
+    print(f"Created {len(synthetic_data)} synthetic training samples")
+    return synthetic_data
 
-    print(f"Created {len(extended_data)} synthetic training samples")
-    return extended_data
+def prepare_features(data: list) -> tuple:
+    """Prepare features and labels for training."""
+    descriptions = []
+    categories = []
 
-def train_model(model_type: str = 'naive_bayes', data_path: str = None) -> bool:
-    """Train the expense categorization model."""
-    try:
-        print(f"Starting model training with {model_type}")
+    for item in data:
+        # Combine description and merchant for better feature extraction
+        text = item['description']
+        if item.get('merchant'):
+            text += f" {item['merchant']}"
 
-        # Load training data
-        if data_path and os.path.exists(data_path):
-            training_data = load_training_data(data_path)
-        else:
-            print("Using synthetic training data")
-            training_data = create_synthetic_data()
+        descriptions.append(text.lower().strip())
+        categories.append(item['category'])
 
-        if len(training_data) < Config.MIN_TRAINING_SAMPLES:
-            print(f"Insufficient training data. Need at least {Config.MIN_TRAINING_SAMPLES} samples")
-            return False
+    return descriptions, categories
 
-        # Initialize model
-        classifier = ExpenseClassifier(model_type=model_type, config={
-            'max_features': Config.MAX_FEATURES,
-            'ngram_range': Config.NGRAM_RANGE,
-            'max_text_length': Config.MAX_TEXT_LENGTH,
-        })
+def train_multiple_models(X_train, X_test, y_train, y_test, vectorizer):
+    """Train and compare multiple models."""
+    models = {
+        'Naive Bayes': MultinomialNB(),
+        'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42),
+        'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42)
+    }
+
+    results = {}
+
+    for name, model in models.items():
+        print(f"\nTraining {name}...")
+
+        # Create pipeline
+        pipeline = Pipeline([
+            ('vectorizer', vectorizer),
+            ('classifier', model)
+        ])
 
         # Train model
-        print("Training model...")
-        training_stats = classifier.train(training_data)
+        pipeline.fit(X_train, y_train)
 
-        # Save model
-        model_path = Config.MODEL_PATH
-        classifier.save_model(model_path)
+        # Make predictions
+        y_pred = pipeline.predict(X_test)
 
-        # Print training results
-        print("\n" + "="*50)
-        print("TRAINING COMPLETED SUCCESSFULLY")
-        print("="*50)
-        print(f"Model Type: {training_stats['model_type']}")
-        print(f"Accuracy: {training_stats['accuracy']:.3f}")
-        print(f"Cross-validation Score: {training_stats['cv_mean']:.3f} ± {training_stats['cv_std']:.3f}")
-        print(f"Training Samples: {training_stats['n_samples']}")
-        print(f"Features: {training_stats['n_features']}")
-        print(f"Categories: {training_stats['n_categories']}")
-        print(f"Model Version: {classifier.model_version}")
-        print(f"Model saved to: {model_path}")
+        # Calculate metrics
+        accuracy = accuracy_score(y_test, y_pred)
+        cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
 
-        # Test predictions
-        print("\n" + "="*50)
-        print("TESTING PREDICTIONS")
-        print("="*50)
+        results[name] = {
+            'model': pipeline,
+            'accuracy': accuracy,
+            'cv_mean': cv_scores.mean(),
+            'cv_std': cv_scores.std(),
+            'predictions': y_pred
+        }
 
-        test_examples = [
-            ("McDonald's breakfast sandwich", "McDonald's"),
-            ("Grocery shopping at store", "Whole Foods"),
-            ("Gas for car", "Shell"),
-            ("Movie night out", "AMC Theaters"),
-            ("Electric bill payment", "PG&E"),
-            ("Doctor visit copay", "Kaiser"),
-            ("Flight to New York", "United Airlines"),
-            ("Online course purchase", "Udemy"),
-            ("Haircut appointment", "Great Clips"),
-            ("Birthday gift purchase", "Target"),
-        ]
+        print(f"{name} - Accuracy: {accuracy:.4f}")
+        print(f"{name} - CV Score: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
 
-        for description, merchant in test_examples:
-            result = classifier.predict(description, merchant)
-            print(f"'{description}' -> {result['category']} (confidence: {result['confidence']:.2f})")
+    return results
 
-        return True
+def hyperparameter_tuning(X_train, y_train, best_model_name):
+    """Perform hyperparameter tuning for the best model."""
+    print(f"\nPerforming hyperparameter tuning for {best_model_name}...")
 
-    except Exception as e:
-        print(f"Error during training: {e}")
-        return False
+    if best_model_name == 'Naive Bayes':
+        pipeline = Pipeline([
+            ('vectorizer', TfidfVectorizer()),
+            ('classifier', MultinomialNB())
+        ])
 
-def evaluate_model(model_path: str = None, test_data_path: str = None) -> None:
-    """Evaluate the trained model on test data."""
-    try:
-        model_path = model_path or Config.MODEL_PATH
+        param_grid = {
+            'vectorizer__max_features': [1000, 2000, 3000],
+            'vectorizer__ngram_range': [(1, 1), (1, 2), (1, 3)],
+            'vectorizer__min_df': [1, 2, 3],
+            'classifier__alpha': [0.1, 0.5, 1.0, 2.0]
+        }
 
-        if not os.path.exists(model_path):
-            print(f"Model file not found: {model_path}")
-            return
+    elif best_model_name == 'Random Forest':
+        pipeline = Pipeline([
+            ('vectorizer', TfidfVectorizer()),
+            ('classifier', RandomForestClassifier(random_state=42))
+        ])
 
-        # Load model
-        classifier = ExpenseClassifier()
-        classifier.load_model(model_path)
+        param_grid = {
+            'vectorizer__max_features': [1000, 2000],
+            'vectorizer__ngram_range': [(1, 1), (1, 2)],
+            'classifier__n_estimators': [50, 100, 200],
+            'classifier__max_depth': [10, 20, None]
+        }
 
-        # Get model info
-        info = classifier.get_model_info()
-        print("\n" + "="*50)
-        print("MODEL INFORMATION")
-        print("="*50)
-        print(json.dumps(info, indent=2, default=str))
+    else:  # Logistic Regression
+        pipeline = Pipeline([
+            ('vectorizer', TfidfVectorizer()),
+            ('classifier', LogisticRegression(max_iter=1000, random_state=42))
+        ])
 
-        # Load test data
-        if test_data_path and os.path.exists(test_data_path):
-            test_data = load_training_data(test_data_path)
-        else:
-            print("No test data provided. Using sample predictions.")
-            return
+        param_grid = {
+            'vectorizer__max_features': [1000, 2000],
+            'vectorizer__ngram_range': [(1, 1), (1, 2)],
+            'classifier__C': [0.1, 1.0, 10.0],
+            'classifier__penalty': ['l2']
+        }
 
-        # Evaluate predictions
-        correct = 0
-        total = len(test_data)
+    # Perform grid search
+    grid_search = GridSearchCV(
+        pipeline,
+        param_grid,
+        cv=3,
+        scoring='accuracy',
+        n_jobs=-1,
+        verbose=1
+    )
 
-        print(f"\nEvaluating on {total} test samples...")
+    grid_search.fit(X_train, y_train)
 
-        for item in test_data:
-            prediction = classifier.predict(item['description'], item.get('merchant', ''))
-            if prediction['category'] == item['category']:
-                correct += 1
+    print(f"Best parameters: {grid_search.best_params_}")
+    print(f"Best cross-validation score: {grid_search.best_score_:.4f}")
 
-        accuracy = correct / total if total > 0 else 0
-        print(f"Test Accuracy: {accuracy:.3f} ({correct}/{total})")
+    return grid_search.best_estimator_
 
-    except Exception as e:
-        print(f"Error during evaluation: {e}")
+def evaluate_model(model, X_test, y_test, categories):
+    """Evaluate the trained model and generate reports."""
+    print("\nEvaluating final model...")
+
+    # Make predictions
+    y_pred = model.predict(X_test)
+    y_pred_proba = model.predict_proba(X_test) if hasattr(model, 'predict_proba') else None
+
+    # Calculate accuracy
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Final model accuracy: {accuracy:.4f}")
+
+    # Generate classification report
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+
+    # Generate confusion matrix
+    cm = confusion_matrix(y_test, y_pred, labels=categories)
+
+    # Plot confusion matrix
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                xticklabels=categories, yticklabels=categories)
+    plt.title('Confusion Matrix')
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.xticks(rotation=45)
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+
+    # Save confusion matrix
+    os.makedirs('reports', exist_ok=True)
+    plt.savefig('reports/confusion_matrix.png', dpi=300, bbox_inches='tight')
+    print("Confusion matrix saved to reports/confusion_matrix.png")
+    plt.close()
+
+    return accuracy, y_pred, y_pred_proba
+
+def save_model_and_metadata(model, accuracy, categories, model_path, metadata_path):
+    """Save the trained model and metadata."""
+    print(f"\nSaving model to {model_path}...")
+
+    # Create directories if they don't exist
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
+
+    # Save the model
+    joblib.dump(model, model_path)
+
+    # Save metadata
+    metadata = {
+        'model_type': type(model).__name__,
+        'accuracy': accuracy,
+        'categories': categories,
+        'training_date': datetime.now().isoformat(),
+        'feature_count': model.named_steps['vectorizer'].get_feature_names_out().shape[0] if hasattr(model, 'named_steps') else 'unknown',
+        'version': '1.0'
+    }
+
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=2)
+
+    print(f"Model saved successfully!")
+    print(f"Model accuracy: {accuracy:.4f}")
+    print(f"Categories: {categories}")
 
 def main():
-    """Main function to handle command line arguments and execute training."""
     parser = argparse.ArgumentParser(description='Train expense categorization model')
-    parser.add_argument('--model', choices=['naive_bayes', 'random_forest', 'logistic_regression'],
-                       default='naive_bayes', help='Model type to train')
     parser.add_argument('--data', type=str, help='Path to training data CSV file')
-    parser.add_argument('--evaluate', action='store_true', help='Evaluate existing model')
-    parser.add_argument('--test-data', type=str, help='Path to test data CSV file for evaluation')
+    parser.add_argument('--output', type=str, default='models/trained_model.pkl',
+                       help='Output path for trained model')
+    parser.add_argument('--test-size', type=float, default=0.2,
+                       help='Test set size (default: 0.2)')
+    parser.add_argument('--tune', action='store_true',
+                       help='Perform hyperparameter tuning')
+    parser.add_argument('--synthetic', action='store_true',
+                       help='Use synthetic data if no data file provided')
 
     args = parser.parse_args()
 
-    if args.evaluate:
-        evaluate_model(test_data_path=args.test_data)
-    else:
-        success = train_model(model_type=args.model, data_path=args.data)
-        if not success:
-            sys.exit(1)
+    print("Starting expense categorization model training...")
+    print(f"{'='*50}")
 
-if __name__ == '__main__':
+    # Load training data
+    if args.data and os.path.exists(args.data):
+        training_data = load_training_data(args.data)
+    elif args.synthetic:
+        training_data = create_synthetic_data()
+    else:
+        print("No training data provided. Use --data path/to/data.csv or --synthetic")
+        return
+
+    if not training_data:
+        print("No training data available. Exiting.")
+        return
+
+    # Prepare features and labels
+    print(f"\nPreparing features from {len(training_data)} samples...")
+    descriptions, categories = prepare_features(training_data)
+
+    # Get unique categories
+    unique_categories = sorted(list(set(categories)))
+    print(f"Found {len(unique_categories)} categories: {unique_categories}")
+
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(
+        descriptions, categories,
+        test_size=args.test_size,
+        random_state=42,
+        stratify=categories
+    )
+
+    print(f"Training set size: {len(X_train)}")
+    print(f"Test set size: {len(X_test)}")
+
+    # Create vectorizer
+    vectorizer = TfidfVectorizer(
+        max_features=2000,
+        ngram_range=(1, 2),
+        min_df=1,
+        stop_words='english'
+    )
+
+    # Train multiple models and compare
+    results = train_multiple_models(X_train, X_test, y_train, y_test, vectorizer)
+
+    # Find best model
+    best_model_name = max(results.keys(), key=lambda k: results[k]['accuracy'])
+    best_model = results[best_model_name]['model']
+
+    print(f"\nBest model: {best_model_name}")
+    print(f"Best accuracy: {results[best_model_name]['accuracy']:.4f}")
+
+    # Hyperparameter tuning if requested
+    if args.tune:
+        best_model = hyperparameter_tuning(X_train, y_train, best_model_name)
+
+    # Final evaluation
+    accuracy, y_pred, y_pred_proba = evaluate_model(best_model, X_test, y_test, unique_categories)
+
+    # Save model and metadata
+    model_path = args.output
+    metadata_path = args.output.replace('.pkl', '_metadata.json')
+    save_model_and_metadata(best_model, accuracy, unique_categories, model_path, metadata_path)
+
+    # Test the saved model
+    print(f"\nTesting saved model...")
+    try:
+        classifier = ExpenseClassifier()
+        classifier.load_model(model_path)
+
+        # Test with a few examples
+        test_examples = [
+            {'description': 'Coffee at Starbucks', 'merchant': 'Starbucks'},
+            {'description': 'Gas station purchase', 'merchant': 'Shell'},
+            {'description': 'Amazon online shopping', 'merchant': 'Amazon'},
+        ]
+
+        for example in test_examples:
+            result = classifier.categorize(example['description'], example.get('merchant'))
+            print(f"'{example['description']}' -> {result['category']} (confidence: {result['confidence']:.3f})")
+
+        print("\nModel training completed successfully!")
+
+    except Exception as e:
+        print(f"Error testing saved model: {e}")
+
+if __name__ == "__main__":
     main()

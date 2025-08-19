@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -9,79 +9,125 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+  ActivityIndicator,
+} from 'react-native'
+import Icon from 'react-native-vector-icons/MaterialIcons'
+import { useAuth } from '../contexts/AuthContext'
+import { useNavigation } from '@react-navigation/native'
+import { COLORS, FONT_SIZES, SPACING } from '../constants/theme'
+import { validateEmail } from '../utils/validators'
 
-import {COLORS, SPACING, FONT_SIZES, LoginRequest} from '../types';
-import {apiService} from '../services/api';
+interface LoginScreenProps {}
 
-const LoginScreen: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{email?: string; password?: string}>({});
+interface FormErrors {
+  email?: string
+  password?: string
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = () => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
+
+  const { login, isAuthenticated } = useAuth()
+  const navigation = useNavigation()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' as never }],
+      })
+    }
+  }, [isAuthenticated, navigation])
 
   const validateForm = (): boolean => {
-    const newErrors: {email?: string; password?: string} = {};
+    const newErrors: FormErrors = {}
 
+    // Email validation
     if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = 'Email is required'
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Please enter a valid email address'
     }
 
-    if (!password.trim()) {
-      newErrors.password = 'Password is required';
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required'
     } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Password must be at least 6 characters'
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleLogin = async () => {
     if (!validateForm()) {
-      return;
+      return
     }
-
-    setIsLoading(true);
-    setErrors({});
 
     try {
-      const loginData: LoginRequest = {email: email.trim(), password};
-      const response = await apiService.login(loginData);
+      setIsLoading(true)
+      setErrors({})
 
-      // Store auth token
-      await AsyncStorage.setItem('authToken', response.token);
-      await AsyncStorage.setItem('user', JSON.stringify(response.user));
+      await login(email.trim().toLowerCase(), password)
 
-      // Navigation will be handled by the AppNavigator
-      // when it detects the auth token
+      // Navigation will be handled by the useEffect above
     } catch (error: any) {
+      console.error('Login error:', error)
+
+      const errorMessage = error?.response?.data?.message ||
+                          error?.message ||
+                          'Login failed. Please try again.'
+
       Alert.alert(
         'Login Failed',
-        error.response?.data?.message || 'Please check your credentials and try again.',
-      );
+        errorMessage,
+        [{ text: 'OK', style: 'default' }]
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleForgotPassword = () => {
     Alert.alert(
       'Forgot Password',
       'Password reset functionality will be implemented in a future update.',
-    );
-  };
+      [{ text: 'OK', style: 'default' }]
+    )
+  }
+
+  const navigateToRegister = () => {
+    navigation.navigate('Register' as never)
+  }
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text)
+    if (errors.email) {
+      setErrors(prev => ({ ...prev, email: undefined }))
+    }
+  }
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text)
+    if (errors.password) {
+      setErrors(prev => ({ ...prev, password: undefined }))
+    }
+  }
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Logo/Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
@@ -108,11 +154,15 @@ const LoginScreen: React.FC = () => {
                 placeholder="Enter your email"
                 placeholderTextColor={COLORS.textSecondary}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
+                returnKeyType="next"
+                onSubmitEditing={() => {
+                  // Focus password input if using ref
+                }}
               />
             </View>
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
@@ -133,30 +183,33 @@ const LoginScreen: React.FC = () => {
                 placeholder="Enter your password"
                 placeholderTextColor={COLORS.textSecondary}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
                 editable={!isLoading}
+                returnKeyType="go"
+                onSubmitEditing={handleLogin}
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
-                style={styles.passwordToggle}>
+                style={styles.passwordToggle}
+                disabled={isLoading}
+              >
                 <Icon
-                  name={showPassword ? 'visibility' : 'visibility-off'}
+                  name={showPassword ? 'visibility-off' : 'visibility'}
                   size={20}
                   color={COLORS.textSecondary}
                 />
               </TouchableOpacity>
             </View>
-            {errors.password && (
-              <Text style={styles.errorText}>{errors.password}</Text>
-            )}
+            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
           </View>
 
-          {/* Forgot Password */}
+          {/* Forgot Password Link */}
           <TouchableOpacity
-            style={styles.forgotPasswordContainer}
             onPress={handleForgotPassword}
-            disabled={isLoading}>
+            style={styles.forgotPasswordContainer}
+            disabled={isLoading}
+          >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
@@ -164,34 +217,36 @@ const LoginScreen: React.FC = () => {
           <TouchableOpacity
             style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
             onPress={handleLogin}
-            disabled={isLoading}>
+            disabled={isLoading}
+          >
             {isLoading ? (
-              <Text style={styles.loginButtonText}>Signing In...</Text>
+              <ActivityIndicator color={COLORS.background} size="small" />
             ) : (
               <Text style={styles.loginButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
 
-          {/* Demo Account */}
-          <View style={styles.demoContainer}>
-            <Text style={styles.demoText}>Demo Account:</Text>
-            <Text style={styles.demoCredentials}>
-              Email: demo@example.com{'\n'}Password: demo123
-            </Text>
+          {/* Register Link */}
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerPrompt}>Don't have an account? </Text>
+            <TouchableOpacity onPress={navigateToRegister} disabled={isLoading}>
+              <Text style={[styles.registerLink, isLoading && styles.linkDisabled]}>
+                Sign Up
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Don't have an account?{' '}
-            <Text style={styles.signUpText}>Contact Support</Text>
+            By signing in, you agree to our Terms of Service and Privacy Policy
           </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -205,19 +260,19 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: SPACING.xxl,
+    marginBottom: SPACING.xl * 2,
   },
   logoContainer: {
-    backgroundColor: COLORS.surface,
     width: 80,
     height: 80,
     borderRadius: 40,
+    backgroundColor: `${COLORS.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
   title: {
-    fontSize: FONT_SIZES.xxxl,
+    fontSize: FONT_SIZES.xxl,
     fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: SPACING.sm,
@@ -226,6 +281,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
+    lineHeight: 22,
   },
   form: {
     marginBottom: SPACING.xl,
@@ -237,7 +293,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -247,26 +303,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: SPACING.md,
+    height: 50,
   },
   inputError: {
     borderColor: COLORS.error,
+    backgroundColor: `${COLORS.error}08`,
   },
   inputIcon: {
     marginRight: SPACING.sm,
   },
   textInput: {
     flex: 1,
-    height: 48,
     fontSize: FONT_SIZES.md,
     color: COLORS.text,
+    paddingVertical: 0,
   },
   passwordToggle: {
-    padding: SPACING.sm,
+    padding: SPACING.xs,
   },
   errorText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.error,
     marginTop: SPACING.xs,
+    marginLeft: SPACING.xs,
   },
   forgotPasswordContainer: {
     alignItems: 'flex-end',
@@ -280,7 +339,7 @@ const styles = StyleSheet.create({
   loginButton: {
     backgroundColor: COLORS.primary,
     borderRadius: 12,
-    height: 48,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.lg,
@@ -293,35 +352,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.background,
   },
-  demoContainer: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: 8,
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  demoText: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: SPACING.xs,
-  },
-  demoCredentials: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  footer: {
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: FONT_SIZES.sm,
+  registerPrompt: {
+    fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
   },
-  signUpText: {
+  registerLink: {
+    fontSize: FONT_SIZES.md,
     color: COLORS.primary,
     fontWeight: '600',
   },
-});
+  linkDisabled: {
+    color: COLORS.textSecondary,
+  },
+  footer: {
+    marginTop: SPACING.xl,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+})
 
-export default LoginScreen;
+export default LoginScreen
